@@ -2,9 +2,14 @@
 
 Reusable AI agent skills, agents, and prompts for the [skills.sh](https://skills.sh) ecosystem.
 
+**📖 [ARCHITECTURE.md](ARCHITECTURE.md)** — The golden guide for agent/skill/prompt architecture design.
+
 ## Structure
 
 ```
+ARCHITECTURE.md      # Golden architecture reference guide
+sync.sh              # Sync agents/prompts to target repos
+
 skills/              # Shareable skills (npx installable)
 ├── decompose-task/  # Break large tasks into atomic sub-tasks
 ├── diff-check/      # Author cleanup before commit/PR submit
