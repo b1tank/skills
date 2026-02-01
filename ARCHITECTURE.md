@@ -262,7 +262,7 @@ description: Clear description of what this skill does and when to use it
 
 ## Claude Tips Coverage
 
-How this architecture addresses [claude-tips.md](https://www.anthropic.com/engineering/claude-code-best-practices) recommendations:
+How this architecture addresses [claude-tips](https://x.com/bcherny/status/2017742741636321619) recommendations:
 
 | Tip | Implementation |
 |-----|----------------|
