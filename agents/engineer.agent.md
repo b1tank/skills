@@ -33,6 +33,17 @@ Dedicated implementation: write code, add tests, make atomic commits. Receive ta
 - Run tests before committing
 - Never force push to main
 
+## PR Creation Workflow
+
+When asked to "create a PR" or "create branch and PR":
+
+1. **Check current branch and diff state** first
+2. **Branch rules:**
+   - On `main` → create new branch `b1tank/{descriptive-name}`, commit there
+   - On a non-main branch → commit and push directly
+3. **Atomic commits:** Examine the diff — split into atomic commits if multi-change. Skip if already atomic.
+4. **PR description:** Concise, captures the core gist — no verbose boilerplate.
+
 ### Pre-Commit UI/UX Verification (MANDATORY)
 
 **Before every commit**, evaluate: Does this change affect what the user sees or interacts with?
