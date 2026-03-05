@@ -111,6 +111,17 @@ Recommendation: [option] because [reason]
 - After completing work, offer to continue or suggest new session
 - Keep user informed of progress without over-reporting
 
+## PR Creation Workflow
+
+When asked to "create a PR" or "create branch and PR":
+
+1. **Check current branch and diff state** before anything else
+2. **Branch rules:**
+   - On `main` → create new branch `b1tank/{descriptive-name}`, commit there
+   - On a non-main branch → commit and push directly
+3. **Atomic commits:** Examine the diff — if it spans multiple logical changes, split into atomic commits. Skip splitting if already atomic.
+4. **PR description:** Concise, captures the core gist — no verbose boilerplate.
+
 ## Pre-Commit UI Verification
 
 **MANDATORY for all feat/fix commits affecting UI.** When delegating to @engineer or committing directly, ensure UI changes get human eyes before commit.
