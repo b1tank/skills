@@ -154,7 +154,10 @@ command_to_userdata() {
     rsync_copy_flat "$REPO_DIR/.github/instructions" "*.instructions.md" "$userdata_dir" "$dry_run_flag"
 
     if [[ -z "$dry_run_flag" ]]; then
-        mapfile -t copied_agents < <(find "$userdata_dir" -maxdepth 1 -type f -name "*.agent.md" | sort)
+        local copied_agents=()
+        while IFS= read -r f; do
+            copied_agents+=("$f")
+        done < <(find "$userdata_dir" -maxdepth 1 -type f -name "*.agent.md" | sort)
         if (( ${#copied_agents[@]} > 0 )); then
             rewrite_agent_name_in_files "append" "${copied_agents[@]}"
         fi
@@ -188,7 +191,10 @@ command_from_userdata() {
     rsync_copy_flat "$userdata_dir" "*.instructions.md" "$REPO_DIR/.github/instructions" "$dry_run_flag"
 
     if [[ -z "$dry_run_flag" ]]; then
-        mapfile -t repo_agents < <(find "$REPO_DIR/.github/agents" -maxdepth 1 -type f -name "*.agent.md" | sort)
+        local repo_agents=()
+        while IFS= read -r f; do
+            repo_agents+=("$f")
+        done < <(find "$REPO_DIR/.github/agents" -maxdepth 1 -type f -name "*.agent.md" | sort)
         if (( ${#repo_agents[@]} > 0 )); then
             rewrite_agent_name_in_files "strip" "${repo_agents[@]}"
         fi
