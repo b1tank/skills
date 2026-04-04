@@ -1,17 +1,21 @@
 ---
 name: verify-ux
-description: Start the app locally and verify UX works based on user input or latest features.
+description: Verify user-facing behavior for the current repo based on user input or latest changes.
 ---
 
 Launch the app and verify user-facing behavior works correctly.
 
-## Start the App
+## Start / Run the Target
 
-```bash
-cd opensnipping && npm run tauri dev
-```
+Use the repo's documented dev instructions (README/CONTRIBUTING). If unclear:
 
-Wait for the app window to appear before proceeding.
+1. Check for workspace tasks (recommended for large repos).
+2. Check `package.json` scripts (or build docs) for the normal dev loop.
+
+If you still can't determine how to run it, ask the user:
+- "Which command do you normally run for dev?"
+
+Wait for the app/extension/test target to be running before proceeding.
 
 ## Determine What to Verify
 
