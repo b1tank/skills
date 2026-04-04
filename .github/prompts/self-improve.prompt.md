@@ -52,29 +52,34 @@ Update the appropriate file:
 
 ### Syncing Shareable Improvements
 
-If you modified shareable content (agents, prompts, or skills that exist in `~/skills/`):
+`~/skills` is the source of truth repo for shareable agent/prompt definitions.
 
-1. **Copy changes to source repo**:
-   ```bash
-   # For agents
-   cp .github/agents/<name>.agent.md ~/skills/agents/
-   
-   # For prompts
-   cp .github/prompts/<name>.prompt.md ~/skills/prompts/
-   
-   # For skills (if shareable)
-   cp -r .github/skills/<name>/ ~/skills/skills/
-   ```
+**After modifying agents/prompts in VS Code user-data:**
 
-2. **Commit and push to ~/skills**:
+1. **Sync user-data → repo (preview, then apply)**
    ```bash
    cd ~/skills
-   git add .
-   git diff --staged  # Review changes
-   git commit -m "agent: <describe improvement>"
+   ./sync.sh from-userdata --dry-run
+   ./sync.sh from-userdata --apply
+   ```
+
+2. **Commit and push**
+   ```bash
+   cd ~/skills
+   git add -A && git commit -m "feat: [description of changes]"
    git push
    ```
 
-3. **Confirm with user** before pushing
+3. **Report status** (MANDATORY)
+   ```
+   ✅ Synced to ~/skills
+   ✅ Committed: [commit hash] — [commit message summary]
+   ✅ Pushed to remote
+   ```
 
-This ensures improvements benefit all repos using b1tank/skills.
+**Other sync operations:**
+
+- **Repo → user-data**: `./sync.sh to-userdata --apply`
+- **Copy to another repo**: `./sync.sh to-repo /absolute/path/to/repo`
+
+**Always sync after self-improve changes** — this ensures definitions are persisted and shareable.

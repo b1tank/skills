@@ -1,6 +1,8 @@
 # Agent Architecture Reference
 
-The "golden bible" for setting up AI agent architecture in any repository.
+Conceptual reference for structuring **instructions**, **agents**, **skills**, and **prompts**.
+
+For day-to-day usage and sync commands, see [README.md](README.md).
 
 ---
 
@@ -15,22 +17,11 @@ The "golden bible" for setting up AI agent architecture in any repository.
 │    └── [your skills]         (your-org/skills) - auto-installed     │
 │                                                                     │
 │  ~/skills/                   Version-controlled source repo         │
-│    ├── skills/               ← installed via npx skills add         │
-│    │   ├── decompose-task/SKILL.md                                  │
-│    │   ├── diff-check/SKILL.md                                      │
-│    │   └── [other skills]                                           │
-│    │                                                                │
-│    ├── agents/               ← manually sync/copy to repos          │
-│    │   ├── product.agent.md                                         │
-│    │   ├── lead.agent.md                                            │
-│    │   ├── engineer.agent.md                                        │
-│    │   └── reviewer.agent.md                                        │
-│    │                                                                │
-│    └── prompts/              ← manually sync/copy to repos          │
-│        ├── new-project.prompt.md                                    │
-│        ├── new-agent.prompt.md                                      │
-│        ├── work-on-next.prompt.md                                   │
-│        └── self-improve.prompt.md                                   │
+│    └── .github/              ← canonical in this repo               │
+│        ├── agents/           (syncs to VS Code user-data)           │
+│        ├── prompts/          (syncs to VS Code user-data)           │
+│        ├── skills/           (repo-local skills)                    │
+│        └── copilot-instructions.md (loaded when chatting here)      │
 └─────────────────────────────────────────────────────────────────────┘
                                     │
                         (sync/copy shareable items)
@@ -44,10 +35,10 @@ The "golden bible" for setting up AI agent architecture in any repository.
 │  AGENTS.md (root) → .github/copilot-instructions.md                 │
 │  .claude/CLAUDE.md → ../.github/copilot-instructions.md             │
 │    │                                                                │
-│    ├── agents/                   From ~/skills/agents/ + local      │
+│    ├── agents/                   From ~/skills/.github/agents/      │
 │    │   └── [synced + repo-specific agents]                          │
 │    │                                                                │
-│    ├── prompts/                  From ~/skills/prompts/ + local     │
+│    ├── prompts/                  From ~/skills/.github/prompts/     │
 │    │   └── [synced + repo-specific prompts]                         │
 │    │                                                                │
 │    └── skills/                   Repo-specific only                 │
@@ -55,9 +46,10 @@ The "golden bible" for setting up AI agent architecture in any repository.
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Sync strategy:**
-- Skills: `npx skills add your-org/skills` (automatic)
-- Agents/Prompts: `./sync.sh <target-repo>` copies from `~/skills/` to repo's `.github/`
+**Sync strategy (high-level):**
+- Bidirectional sync with VS Code user-data (`./sync.sh to-userdata` / `from-userdata`)
+- Bidirectional sync with Codex skills (`./sync.sh to-codex` / `from-codex`)
+- One-way copy into other repos (`./sync.sh to-repo <path>`)
 
 ---
 
@@ -81,14 +73,17 @@ The "golden bible" for setting up AI agent architecture in any repository.
 
 | Agent | Role | Responsibilities |
 |-------|------|------------------|
-| `product` | Product Designer | Drafts spec.md from user's one-liner idea; asks clarifying questions; researches market; follows spec template pattern |
-| `lead` | Tech Lead | Generates plan.md from spec.md; orchestrates work; delegates to engineer/reviewer; makes architecture decisions; handles simple tasks directly |
-| `engineer` | Software Engineer | Dedicated implementation; writes code, tests, commits; invoked by lead or manually in separate window |
-| `reviewer` | Code Reviewer | Critical review of diffs/commits/PRs; "grill me" mindset; provides critical + nitpick feedback; scores quality |
+| `product-designer` | Product Designer | Drafts `spec.md` from a one-liner idea; asks clarifying questions; uses `market-research` + `spec-template` |
+| `planner` | Planner | Turns a work item into an ordered task breakdown; invokes `decompose-task` for large work |
+| `lead` | Tech Lead | Orchestrates execution, delegates to engineer/reviewer, balances scope/risk |
+| `engineer` | Software Engineer | Dedicated implementation; writes code and tests; follows commit discipline |
+| `reviewer` | Code Reviewer | Critical review of diffs/commits/PRs; uses `diff-check` as a final sweep |
+| `explainer` | Explainer | Educational agent that explains code changes; uses diagrams and visuals |
+| `ui-tester` | UI Tester | Guided UI verification; produces manual verification steps |
 
-**Project lifecycle flow:**
+**Typical flow (one of many):**
 ```
-User one-liner → @product (spec.md) → @lead (plan.md) → @engineer (impl) → @reviewer (review)
+User request → @planner → @engineer → @reviewer
 ```
 
 **Why both lead and engineer?**
@@ -104,7 +99,7 @@ User one-liner → @product (spec.md) → @lead (plan.md) → @engineer (impl) �
 
 ## Skills Distribution
 
-### Shareable Skills → `~/skills/skills/`
+### Global Skills → `~/.copilot/skills/` (installed)
 
 Skills useful across projects, installed via `npx skills add`:
 
@@ -114,63 +109,39 @@ Skills useful across projects, installed via `npx skills add`:
 | `diff-check` | Author's cleanup before submit (no debug code, secrets, redundant changes) |
 | `market-research` | Research existing products/competitors; analyze features; identify gaps |
 | `spec-template` | 9-section product spec pattern |
+| `clone-with-hash` | Clone a repo into a unique `-<hash>` folder for isolated parallel work |
 
-### Shareable Agents → `~/skills/agents/`
+### Repo Agents → `.github/agents/` (canonical)
 
-Agents that address common concerns, synced via `./sync.sh`:
+Agents that address common concerns. This document focuses on *roles and boundaries*; see [README.md](README.md) for the concrete inventory and sync commands.
 
-| Agent | Description |
-|-------|-------------|
-| `product` | Product designer: spec.md from idea |
-| `lead` | Tech lead: plan.md + orchestration |
-| `engineer` | Dedicated implementation; parallel windows support |
-| `reviewer` | Critical "grill me" review for commits/PRs |
+### Repo Prompts → `.github/prompts/` (canonical)
 
-### Shareable Prompts → `~/skills/prompts/`
+Prompts are lightweight triggers that route work to the right agent (triage vs planning vs implementation). Avoid embedding repo-specific workflow assumptions in prompt content.
 
-Prompts that trigger common workflows:
+### Repo Skills → `.github/skills/`
 
-| Prompt | Purpose | Invokes |
-|--------|---------|---------|
-| `new-project` | Start new project from one-liner idea | `@product` |
-| `new-agent` | Create new agent (like hiring a team member) | `@lead` |
-| `work-on-next` | Start next atomic task from plan | `@lead` |
-| `self-improve` | Meta instruction for agent/skill improvement | N/A |
+In this repo, `.github/skills/` is the canonical location for skills you want available while working here.
 
-### Repo-Specific Skills → `.github/skills/`
-
-Skills specific to a single project only. Examples:
-- `tauri-contract` — TS ⇄ Rust contract sync
-- `db-schema` — Database migration procedures
-- `api-versioning` — API deprecation workflow
+To make skills globally available across all repos (outside of this repo), install them into `~/.copilot/skills/` via `npx skills add`.
 
 ---
 
 ## Prompts Detail
 
-### `new-project` Prompt
+### Key Prompts
 
-Start a new project from a one-liner idea.
-
-**Flow:**
-1. User provides one-liner (e.g., "A lightweight screen recorder")
-2. @product asks clarifying questions
-3. Uses `market-research` skill to analyze competitors
-4. Drafts spec.md using `spec-template` skill
-5. Iterates with user until approved
-
-### `new-agent` Prompt
-
-Create a new agent role (hiring analogy).
-
-**Flow:**
-1. User describes needed role (e.g., "I need a devops agent")
-2. @lead analyzes responsibilities
-3. Identifies skills the agent should use
-4. Determines decision boundaries
-5. Drafts agent file following patterns
-6. Suggests placement (shareable vs repo-specific)
-7. Creates after user confirmation
+| Prompt | Purpose | Invokes |
+|--------|---------|--------|
+| `new-project` | Start new project from one-liner idea | `@product-designer` |
+| `new-agent` | Create new agent (like hiring a team member) | `@lead` |
+| `work-on-next` | Start next task — routes to triage, planning, or implementation | `@planner` / `@engineer` |
+| `self-improve` | Meta nudge for agent/skill improvement | N/A |
+| `create-pr` | Run diff-check, commit, push, create PR | N/A |
+| `grill-me-for-pr` | Pre-PR readiness review | `@reviewer` |
+| `sprint-in-yolo` | Execute full sprint autonomously | N/A |
+| `continue-in-new` | Document state for session handoff | N/A |
+| `verify-ux` | Launch app and verify UX | N/A |
 
 ---
 
@@ -225,17 +196,17 @@ When explaining code or changes:
 
 ---
 
-## Skills.sh Integration
+## Skills Integration
 
 **Skills workflow (automatic via npx):**
-1. Develop skill in `~/skills/skills/<name>/SKILL.md`
+1. Develop skill in `.github/skills/<name>/SKILL.md`
 2. Push to GitHub: `cd ~/skills && git add . && git commit && git push`
-3. Others install: `npx skills add your-org/skills`
+3. Others install: `npx skills add b1tank/skills`
 
-**Agents/Prompts workflow (manual sync):**
-1. Develop in `~/skills/agents/` or `~/skills/prompts/`
-2. Push to GitHub for version control
-3. Run sync script: `./sync.sh <target-repo>`
+**Agents/Prompts workflow (sync.sh):**
+1. Develop in `.github/agents/` or `.github/prompts/`
+2. Sync to VS Code user-data: `./sync.sh to-userdata --apply`
+3. Or copy to another repo: `./sync.sh to-repo <path>`
 
 **Skill format** (per anthropics/skills spec):
 ```markdown
@@ -271,7 +242,7 @@ How this architecture addresses [claude-tips](https://x.com/bcherny/status/20177
 | **Invest in CLAUDE.md** | Symlink to `copilot-instructions.md` |
 | **Create skills** | `~/skills/` repo with skills.sh integration |
 | **Grill me** | `@reviewer` agent with "grill me" mindset |
-| **Detailed specs** | `@product` drafts spec.md; `spec-template` skill |
+| **Detailed specs** | `@product-designer` drafts spec.md; `spec-template` skill |
 | **Use subagents** | `@lead` delegates to `@engineer` via subagent |
 | **Explain the why** | Learning mode in instructions |
 | **Visual presentations** | Learning mode: offer HTML presentations |
@@ -282,21 +253,27 @@ How this architecture addresses [claude-tips](https://x.com/bcherny/status/20177
 ## File Structure Template
 
 ```
-~/skills/                    # Source repo (your-org/skills)
+~/skills/                    # Source repo (b1tank/skills)
 ├── README.md
+├── ARCHITECTURE.md
 ├── sync.sh
-├── skills/
-│   └── [skill-name]/SKILL.md
-├── agents/
-│   └── [agent-name].agent.md
-├── prompts/
-│   └── [prompt-name].prompt.md
-└── template/
-    └── SKILL.md
+├── .claude/hooks/           # Claude Code hooks
+│   └── langfuse_hook.py     # Langfuse tracing
+├── .github/
+│   ├── copilot-instructions.md
+│   ├── agents/
+│   │   └── [agent-name].agent.md
+│   ├── prompts/
+│   │   └── [prompt-name].prompt.md
+│   └── skills/
+│       └── [skill-name]/SKILL.md
+```
 
-.github/                     # Per-repo
+<other-repo>/.github/        # Per-repo (synced via ./sync.sh to-repo)
 ├── copilot-instructions.md  # Repo-wide rules + learning mode
-├── README.md                # How to use agents, skills, prompts
+├── agents/                  # Synced from ~/skills
+├── prompts/                 # Synced from ~/skills
+├── skills/                  # Repo-specific skills
 
 AGENTS.md (root)             # → symlink to .github/copilot-instructions.md
 .claude/CLAUDE.md            # → symlink to ../.github/copilot-instructions.md

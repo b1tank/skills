@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone With Hash"
+  short_description: "Clone repo into unique -{hash} folder"
+  default_prompt: "Use $clone-with-hash to clone this repo into a new -{hash} folder."
