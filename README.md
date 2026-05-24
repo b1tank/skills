@@ -38,6 +38,7 @@ sync.sh                  # Bidirectional sync (VS Code user-data, Codex, other r
       ├── clone-with-hash/     # Isolated repo clones for parallel work
       ├── decompose-task/      # Break large tasks into atomic sub-tasks
       ├── diff-check/          # Author cleanup before commit/PR submit
+      ├── ios-safari-debug/    # Debug iPhone Safari from Linux (no Mac needed)
       ├── market-research/     # Research products/competitors
       └── spec-template/       # 9-section product spec pattern
 ```
