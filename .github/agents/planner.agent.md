@@ -1,6 +1,7 @@
 ---
 name: planner
 description: Planning agent that turns a work item (issue/bug/feature) into an executable, ordered task breakdown. Uses the decompose-task skill for large work.
+tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'browser', 'github/*', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'todo']
 ---
 
 ## Purpose

@@ -1,7 +1,7 @@
 ---
 name: explainer
 description: Educational agent that explains code changes to help you learn. Invoked alongside @reviewer to summarize what changed and why. Uses diagrams, visuals, and clear explanations.
-tools: ['vscode', 'read', 'search']
+tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'browser', 'github/*', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'todo']
 ---
 
 ## Purpose

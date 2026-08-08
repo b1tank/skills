@@ -1,100 +1,33 @@
 # b1tank/skills
 
-Reusable AI agent skills, agents, and prompts for the [skills.sh](https://skills.sh) ecosystem.
+One source of truth for personal agent skills, slash prompts, custom agents, instructions, and MCP servers across VS Code Insiders, VS Code Agent Host, Copilot CLI, Claude Code, Codex, Pi, and OpenCode. Shared skills use the vendor-neutral `~/.agents/skills` location wherever supported; Claude receives a compatibility projection. Pi accesses MCP through the token-efficient MCPorter CLI rather than a generic MCP extension.
 
-**[ARCHITECTURE.md](ARCHITECTURE.md)** — The golden guide for agent/skill/prompt architecture design.
+## New machine
 
-## Structure
-
-```
-ARCHITECTURE.md          # Golden architecture reference guide
-sync.sh                  # Bidirectional sync (VS Code user-data, Codex, other repos)
-.claude/hooks/           # Claude Code hooks
-  └── langfuse_hook.py   # Langfuse tracing for Claude Code sessions
-
-.github/
-  ├── copilot-instructions.md  # Repo-wide rules
-  ├── agents/                  # Shareable agent definitions
-  │   ├── engineer.agent.md    # Dedicated implementation
-  │   ├── explainer.agent.md   # Educational code explanations
-  │   ├── lead.agent.md        # Tech lead: orchestration
-  │   ├── planner.agent.md     # Task breakdown & sequencing
-  │   ├── product-designer.agent.md  # spec.md from idea
-  │   ├── reviewer.agent.md    # Critical "grill me" review
-  │   └── ui-tester.agent.md   # UI verification
-  │
-  ├── prompts/                 # Shareable prompts
-  │   ├── continue-in-new.prompt.md   # Session handoff
-  │   ├── create-pr.prompt.md         # Diff-check + PR
-  │   ├── grill-me-for-pr.prompt.md   # Pre-PR readiness
-  │   ├── new-agent.prompt.md         # Create new agent → @lead
-  │   ├── new-project.prompt.md       # New project → @product-designer
-  │   ├── self-improve.prompt.md      # Meta improvement
-  │   ├── sprint-in-yolo.prompt.md    # Autonomous sprint
-  │   ├── verify-ux.prompt.md         # UX verification
-  │   └── work-on-next.prompt.md      # Next task → triage/plan/impl
-  │
-  └── skills/                  # Shareable skills
-      ├── clone-with-hash/     # Isolated repo clones for parallel work
-      ├── decompose-task/      # Break large tasks into atomic sub-tasks
-      ├── diff-check/          # Author cleanup before commit/PR submit
-      ├── ios-safari-debug/    # Debug iPhone Safari from Linux (no Mac needed)
-      ├── market-research/     # Research products/competitors
-      └── spec-template/       # 9-section product spec pattern
-```
-
-## Installation
-
-### Skills (automatic via npx)
+Install any one supported agent, then:
 
 ```bash
-npx skills add b1tank/skills
+git clone git@github.com-b1tank:b1tank/skills.git ~/skills
+cd ~/skills
+./setup.sh status
+./setup.sh bootstrap --dry-run
+./setup.sh bootstrap
+./setup.sh validate --connect
 ```
 
-This installs all skills from `.github/skills/` to `~/.copilot/skills/`.
+After that, every supported harness sees the same customizations. An agent opened in this repo reads `AGENTS.md` or `CLAUDE.md` and knows how to set up or repair the machine for all other agents.
 
-### Agents & Prompts (sync to VS Code user-data)
+## Canonical content
 
-```bash
-# Preview what will change
-./sync.sh to-userdata --dry-run
+- `.github/skills/*/SKILL.md` — reusable skills
+- `.github/prompts/*.prompt.md` — slash workflows such as `/diff-check` and `/sprint-in-yolo`; generated as commands or skills when necessary
+- `.github/agents/*.agent.md` — custom roles
+- `.github/instructions/*.instructions.md` — VS Code instruction files
+- `mcp/servers.json` — secret-free MCP definitions
+- `AGENTS.md` and `CLAUDE.md` — repository-local bootstrap instructions, discovered only when an agent works in this repo; bootstrap never installs them as user-global instructions
 
-# Apply
-./sync.sh to-userdata --apply
-```
+Use `./setup.sh import --dry-run` on an already-customized machine to find skills and prompt files missing from Git. Use `./setup.sh credentials` to list required environment variables.
 
-When syncing **to user-data**, agent names are suffixed with ` (U)` so they're visually distinct in VS Code. When syncing **from user-data** back, that suffix is stripped.
+See [BOOTSTRAP.md](BOOTSTRAP.md) for commands and [the compatibility matrix](docs/agent-customization-compatibility.md) for every path, format, precedence rule, and limitation. [ARCHITECTURE.md](ARCHITECTURE.md) explains the design.
 
-### Copy into another repo
-
-```bash
-./sync.sh to-repo ~/my-project
-```
-
-### Codex skills sync
-
-```bash
-./sync.sh to-codex --apply    # repo → ~/.codex/skills
-./sync.sh from-codex --apply  # ~/.codex/skills → repo
-```
-
-## Creating New Skills
-
-1. Copy `template/SKILL.md` to `.github/skills/<name>/SKILL.md`
-2. Update the YAML frontmatter (name, description)
-3. Write the skill instructions
-4. Push to GitHub
-5. Install: `npx skills add b1tank/skills`
-
-## Common Prompts
-
-- `/work-on-next` — start work on a new issue/bug/feature (triage, planning, or implementation)
-- `/new-project` — draft a `spec.md` from a one-liner
-- `/create-pr` — diff-check, commit, push, create PR
-- `/grill-me-for-pr` — pre-PR readiness review
-- `/sprint-in-yolo` — execute full sprint autonomously
-- `/continue-in-new` — document state for session handoff
-
-## Reference
-
-Based on [anthropics/skills](https://github.com/anthropics/skills/tree/main) structure.
+`sync.sh` remains for its old bidirectional VS Code and copy-to-repo workflows. Prefer `setup.sh` for machine-wide installation.

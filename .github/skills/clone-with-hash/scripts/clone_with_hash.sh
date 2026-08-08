@@ -16,7 +16,7 @@ USAGE
 
 dry_run=false
 base_branch="main"
-branch_prefix="b1tank/"
+branch_prefix="user/"
 
 while (( $# > 0 )); do
     case "${1:-}" in

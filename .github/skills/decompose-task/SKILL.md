@@ -1,6 +1,6 @@
 ---
 name: decompose-task
-description: Break large tasks (>100 lines) into atomic, verifiable sub-tasks. Use when a task scope is unclear, touches multiple files/modules, or exceeds comfortable single-commit size. Returns structured breakdown without implementing code.
+description: Break large tasks (more than 100 lines) into atomic, verifiable sub-tasks. Use when a task scope is unclear, touches multiple files/modules, or exceeds comfortable single-commit size. Returns structured breakdown without implementing code.
 ---
 
 # Task Decomposition

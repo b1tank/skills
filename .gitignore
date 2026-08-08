@@ -2,3 +2,7 @@
 __pycache__/
 .idea/
 .vscode/
+.playwright-*/
+node_modules/
+.generated/
+*.work-skills-backup-*

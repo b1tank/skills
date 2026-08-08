@@ -1,6 +1,7 @@
 ---
 name: grill-me-for-pr
 description: Pre-PR readiness check — cleanup, refactoring, and reviewer-friction analysis before opening a PR.
+argument-hint: "[target branch or review focus]"
 ---
 
 Run a **Pre-PR Readiness** review on the current branch using `@reviewer`.

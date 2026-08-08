@@ -299,3 +299,34 @@ AGENTS.md (root)             # → symlink to .github/copilot-instructions.md
    ```
 4. **Customize instructions**: Edit `copilot-instructions.md` for project-specific rules
 5. **Add repo-specific skills**: Create in `.github/skills/` as needed
+
+---
+
+## Cross-harness projection architecture
+
+
+The repository stores semantic customizations once, then projects them into each harness's native format.
+
+```text
+                    ~/skills (Git, no secrets)
+          skills   prompts   agents   instructions   MCP manifest
+             \        |         |          |             /
+                         ./setup.sh
+                              |
+      +-----------+-----------+-----------+-----------+
+      |           |           |           |           |
+   VS Code     Copilot      Claude      Codex      Pi/OpenCode
+   native MD   native MD    command MD  agent TOML  adapters
+```
+
+## Design rules
+
+1. `.github/` and `mcp/servers.json` are canonical; user-directory files are projections.
+2. `~/.agents/skills` is the neutral shared skill root. Claude receives an additional projection because it uses its own user root.
+3. A prompt remains a native slash command where supported and becomes an explicitly triggered skill elsewhere.
+4. Agents are converted from VS Code `.agent.md` into the minimum native Claude, Codex, or OpenCode representation. Unsupported tool allowlists are omitted rather than mistranslated.
+5. MCP is data, not copied client config. A secret-free manifest renders each native client's schema and a token-efficient MCPorter registry for Pi. Product-owned Pi adapters may expose the same MCP implementation as native Pi tools when richer lifecycle or image handling matters.
+6. Installation is idempotent. Canonical links are left alone, collisions are backed up, and structured MCP files are merged.
+7. Workspace configuration stays workspace-scoped. In particular, `.vscode/mcp.json` is never treated as global state.
+
+See [the compatibility matrix](docs/agent-customization-compatibility.md) for concrete paths and caveats.

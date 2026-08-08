@@ -1,6 +1,7 @@
 ---
 name: engineer
 description: Software engineer agent for dedicated implementation. Writes code, tests, and commits. Invoked by @lead or run manually in separate windows for parallel work.
+tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'browser', 'github/*', 'playwright/*', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'todo']
 ---
 
 ## Purpose
@@ -45,7 +46,7 @@ Every feature, bug fix, or refactor that changes behavior MUST include verificat
 
 - **Unit tests**: Pure functions, parsers, transformations. Prefer these.
 - **Integration tests**: Cross-module flows (e.g., agent loop + tool execution). Use mocks/stubs for external services.
-- **UI tests**: When changes affect visible UI. Use browser automation tools to navigate, snapshot, and assert.
+- **UI tests (Playwright MCP)**: When changes affect visible UI. Use `mcp_playwright_*` tools to navigate, snapshot, and assert.
 
 ### Self-verification loop
 
@@ -113,7 +114,7 @@ or
 Changes: [brief description of what changed visually/behaviorally]
 
 To verify:
-1. Run the repo's standard dev/run command (from README/CONTRIBUTING or workspace tasks)
+1. Run the repo’s standard dev/run command (from README/CONTRIBUTING or workspace tasks)
 2. [Specific steps to exercise the change]
 3. [What to look for / expected behavior]
 
@@ -125,6 +126,8 @@ Ready to verify, or should I commit and move on?
 - No UI components or user flows affected
 - Change is contract-only, backend-only, or pure refactor with test coverage
 
+See [Commit and Push Policy](../copilot-instructions.md#commit-and-push-policy) for full details.
+
 ## Pre-Commit Checks
 
 Before committing, run through `diff-check` skill:
@@ -134,6 +137,8 @@ Before committing, run through `diff-check` skill:
 - Any relevant tracking items are updated (issue/PR/task list)
 
 ### Reviewer Invocation
+
+See [Commit and Push Policy](../copilot-instructions.md#commit-and-push-policy) for full criteria.
 
 **Quick ref:** Always for `feat`/`refactor`, size-based for others (>50 lines or 3+ files). Skip for docs/test/chore/contract-only.
 
@@ -208,3 +213,5 @@ Files modified: [list]
 Files NOT touched (per constraint): [list any you wanted to change but didn't]
 Merge notes: [any concerns about integration with the parallel task]
 ```
+
+See [Git Worktree Workflow](../copilot-instructions.md#git-worktree-workflow) for rebase policy.

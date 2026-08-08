@@ -1,6 +1,7 @@
 ---
 name: continue-in-new
 description: Document current state for smooth handoff to a new session
+argument-hint: "[handoff focus or next step]"
 ---
 
 Prepare a session handoff so a new agent session can continue without losing context.

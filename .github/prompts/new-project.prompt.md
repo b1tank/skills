@@ -1,6 +1,7 @@
 ---
 name: new-project
 description: Start a new project from a one-liner idea. Invokes @product to draft spec.md.
+argument-hint: "<project idea>"
 ---
 
 You want to start a new project. Invoke the **@product** agent to help you:
@@ -25,10 +26,10 @@ The @product agent will:
 
 ## Output
 
-A complete `spec.md` file ready to hand off to @lead for plan.md generation.
+A complete `spec.md` file ready to hand off for task breakdown and execution.
 
 ## Next Steps
 
 After spec.md is approved:
-- Run `/work-on-next` to invoke @lead for plan generation
-- Or manually invoke `@lead` with the spec
+- Run `/work-on-next` to start work (triage, planning, or implementation)
+- Or invoke `@planner` to get an ordered task breakdown

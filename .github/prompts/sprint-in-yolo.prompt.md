@@ -1,6 +1,7 @@
 ---
 name: sprint-in-yolo
 description: Turn a list of tasks into a prioritized sprint and execute all of them autonomously with atomic commits.
+argument-hint: "[task list or sprint goal]"
 ---
 
 Execute a full sprint in YOLO mode from the task list below.
@@ -25,4 +26,4 @@ Execute a full sprint in YOLO mode from the task list below.
 
 ## Task List
 
-<!-- Paste your numbered task list here -->
+Use the invocation input as the task list. Accept a numbered list, bullets, or a single-sentence sprint goal. If no input was supplied, use an existing project task or plan file when one clearly identifies pending work; otherwise ask for the tasks and stop.

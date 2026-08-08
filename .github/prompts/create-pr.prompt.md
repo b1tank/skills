@@ -1,6 +1,7 @@
 ---
 name: create-pr
-description: Run diff check, commit on a b1tank/* dev branch, push, and create a PR against main.
+description: Run diff check, commit on a user/* dev branch, push, and create a PR against main.
+argument-hint: "[PR scope, base, or notes]"
 ---
 
 Prepare and open a pull request for the current work.
@@ -8,8 +9,8 @@ Prepare and open a pull request for the current work.
 ## Steps
 
 1. **Branch check**: Run `git branch --show-current`.
-   - If already on a `b1tank/*` branch, keep it.
-   - Otherwise, create and switch to `b1tank/<descriptive-slug>` based on the work done (e.g., `b1tank/add-create-pr-prompt`). Derive the slug from the commit intent — don't ask.
+   - If already on a `user/*` branch, keep it.
+   - Otherwise, create and switch to `user/<descriptive-slug>` based on the work done (e.g., `user/add-create-pr-prompt`). Derive the slug from the commit intent — don't ask.
 
 2. **Diff check**: Run the `diff-check` skill against `main`. If critical issues are found, fix them before proceeding. Warnings are acceptable — list them but continue.
 
@@ -25,7 +26,7 @@ Prepare and open a pull request for the current work.
 
 6. **Report**:
    ```
-   ✅ Branch: b1tank/<name>
+   ✅ Branch: user/<name>
    ✅ Committed: <hash> — <message>
    ✅ Pushed to origin
    ✅ PR created/updated: <url>

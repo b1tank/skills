@@ -1,6 +1,7 @@
 ---
 name: new-agent
 description: Create a new agent role (like hiring a team member). Invokes @lead to design the agent spec.
+argument-hint: "<role description>"
 ---
 
 You want to create a new agent role. Think of it like hiring a new team member.

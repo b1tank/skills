@@ -1,6 +1,7 @@
 ---
 name: self-improve
 description: Improve agent/skill/prompt instructions in this repo. Meta-level nudge for setup refinement.
+argument-hint: "[instructions or area to improve]"
 ---
 
 Improve the instructions for agents, skills, and prompts. Keep instructions concise and clear.

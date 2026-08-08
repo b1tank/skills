@@ -1,0 +1,26 @@
+{
+  "$schema": "./sources.schema.json",
+  "version": 1,
+  "skills": [
+    {
+      "name": "deskpal-desktop-control",
+      "source": "{home}/deskpal/skills/deskpal-desktop-control"
+    },
+    {
+      "name": "analyze-trace",
+      "source": "{home}/otelux/plugins/otelux/skills/analyze-trace"
+    },
+    {
+      "name": "investigate-incident",
+      "source": "{home}/otelux/plugins/otelux/skills/investigate-incident"
+    },
+    {
+      "name": "open-dashboard",
+      "source": "{home}/otelux/plugins/otelux/skills/open-dashboard"
+    },
+    {
+      "name": "service-health",
+      "source": "{home}/otelux/plugins/otelux/skills/service-health"
+    }
+  ]
+}

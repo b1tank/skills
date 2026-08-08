@@ -1,0 +1,52 @@
+{
+  "$schema": "./servers.schema.json",
+  "version": 1,
+  "retiredServers": ["workiq"],
+  "credentials": {
+    "GITHUB_PAT": "Bearer token for the GitHub MCP server. Prefer each client's OAuth flow when available."
+  },
+  "servers": {
+    "github": {
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "bearerEnv": "GITHUB_PAT",
+      "excludeTargets": ["copilot"],
+      "mcporter": {
+        "transport": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "mcp-remote@0.1.38",
+          "https://api.githubcopilot.com/mcp/",
+          "--header",
+          "Authorization: Bearer ${GITHUB_PAT}",
+          "--transport",
+          "http-only"
+        ]
+      }
+    },
+    "playwright": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser=msedge"]
+    },
+    "deskpal": {
+      "transport": "stdio",
+      "command": "{home}/deskpal/build/deskpal",
+      "args": ["--allow-exec"],
+      "envPass": ["DISPLAY"],
+      "excludeTargets": ["pi"]
+    },
+    "otelux": {
+      "transport": "stdio",
+      "command": "node",
+      "args": ["{home}/otelux/plugins/otelux/bin/otelux-mcp-bridge.mjs"],
+      "cwd": "{home}/otelux/plugins/otelux",
+      "excludeTargets": ["pi"]
+    },
+    "excalidraw": {
+      "transport": "http",
+      "url": "https://mcp.excalidraw.com"
+    }
+  }
+}

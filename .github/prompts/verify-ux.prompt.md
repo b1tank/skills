@@ -1,19 +1,20 @@
 ---
 name: verify-ux
 description: Verify user-facing behavior for the current repo based on user input or latest changes.
+argument-hint: "[behavior or change to verify]"
 ---
 
 Launch the app and verify user-facing behavior works correctly.
 
 ## Start / Run the Target
 
-Use the repo's documented dev instructions (README/CONTRIBUTING). If unclear:
+Use the repo’s documented dev instructions (README/CONTRIBUTING). If unclear:
 
 1. Check for workspace tasks (recommended for large repos).
 2. Check `package.json` scripts (or build docs) for the normal dev loop.
 
-If you still can't determine how to run it, ask the user:
-- "Which command do you normally run for dev?"
+If you still can’t determine how to run it, ask the user:
+- “Which command do you normally run for dev?”
 
 Wait for the app/extension/test target to be running before proceeding.
 
