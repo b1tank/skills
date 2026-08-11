@@ -14,7 +14,8 @@
             "type": "string",
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
-          "source": { "type": "string" }
+          "source": { "type": "string" },
+          "platforms": { "type": "array", "items": { "enum": ["darwin", "linux", "win32"] }, "uniqueItems": true }
         },
         "additionalProperties": false
       }

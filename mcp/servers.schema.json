@@ -20,6 +20,7 @@
               "args": { "type": "array", "items": { "type": "string" } },
               "cwd": { "type": "string" },
               "envPass": { "type": "array", "items": { "type": "string" } },
+              "platforms": { "type": "array", "items": { "enum": ["darwin", "linux", "win32"] }, "uniqueItems": true },
               "excludeTargets": { "type": "array", "items": { "type": "string" } },
               "mcporter": { "$ref": "#/$defs/stdioServer" }
             }
@@ -31,6 +32,7 @@
               "transport": { "const": "http" },
               "url": { "type": "string", "format": "uri" },
               "bearerEnv": { "type": "string" },
+              "platforms": { "type": "array", "items": { "enum": ["darwin", "linux", "win32"] }, "uniqueItems": true },
               "excludeTargets": { "type": "array", "items": { "type": "string" } },
               "mcporter": { "$ref": "#/$defs/stdioServer" }
             }

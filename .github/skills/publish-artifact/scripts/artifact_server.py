@@ -130,7 +130,12 @@ class ArtifactHandler(SimpleHTTPRequestHandler):
 
     @property
     def artifact_root(self) -> Path:
-        return Path(self.directory).resolve()
+        # Keep the lexical server root for the initial containment check. On
+        # macOS, /var is a symlink to /private/var while translate_path keeps
+        # the /var spelling; resolving only one side rejects every valid file.
+        # Individual publication targets are still resolved below to prevent
+        # nested symlink escapes.
+        return Path(self.directory).absolute()
 
     def _path_is_allowed(self) -> bool:
         root = self.artifact_root

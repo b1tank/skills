@@ -22,6 +22,7 @@ const piSkillsRepository = 'https://github.com/badlogic/pi-skills';
 const managedStatePath = path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'b1tank-skills', 'state.json');
 const stamp = new Date().toISOString().replaceAll(':', '').replaceAll('.', '');
 const backupRoot = path.join(path.dirname(managedStatePath), 'backups', stamp);
+const currentPlatform = process.env.B1TANK_SKILLS_PLATFORM || process.platform;
 
 const aliases = {
 	all: ['vscode', 'agent-host', 'copilot', 'claude', 'codex', 'pi', 'opencode'],
@@ -58,6 +59,10 @@ function log(action, detail) {
 
 function expand(value) {
 	return value.replaceAll('{repo}', repo).replaceAll('{home}', home);
+}
+
+function supportsPlatform(item) {
+	return !item.platforms?.length || item.platforms.includes(currentPlatform);
 }
 
 async function exists(file) {
@@ -195,15 +200,16 @@ async function skillEntries(directory) {
 }
 
 function splitFrontmatter(text) {
-	if (!text.startsWith('---\n')) return { data: {}, body: text.trim() };
-	const end = text.indexOf('\n---\n', 4);
-	if (end === -1) return { data: {}, body: text.trim() };
+	const normalized = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+	if (!normalized.startsWith('---\n')) return { data: {}, body: normalized.trim() };
+	const end = normalized.indexOf('\n---\n', 4);
+	if (end === -1) return { data: {}, body: normalized.trim() };
 	const data = {};
-	for (const line of text.slice(4, end).split('\n')) {
+	for (const line of normalized.slice(4, end).split('\n')) {
 		const match = /^([a-zA-Z0-9_-]+):\s*(.*)$/.exec(line);
 		if (match) data[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
 	}
-	return { data, body: text.slice(end + 5).trim() };
+	return { data, body: normalized.slice(end + 5).trim() };
 }
 
 async function generateFiles() {
@@ -310,20 +316,25 @@ async function installPiUpstreamSkills() {
 async function installPiProductPackages() {
 	const file = path.join(home, '.pi', 'agent', 'settings.json');
 	const config = await readJson(file);
-	const packages = Array.isArray(config.packages) ? [...config.packages] : [];
+	let packages = Array.isArray(config.packages) ? [...config.packages] : [];
 	const packageRoot = path.dirname(file);
-	for (const [entry, directory] of [
-		['../../deskpal', path.join(home, 'deskpal')],
-		['../../otelux/plugins/otelux', path.join(home, 'otelux', 'plugins', 'otelux')],
+	const packageMatches = (item, directory) => {
+		const source = typeof item === 'string' ? item : item?.source;
+		return typeof source === 'string' && !source.includes(':') && path.resolve(packageRoot, source) === directory;
+	};
+	for (const { entry, directory, platforms } of [
+		{ entry: '../../deskpal', directory: path.join(home, 'deskpal'), platforms: ['linux'] },
+		{ entry: '../../otelux/plugins/otelux', directory: path.join(home, 'otelux', 'plugins', 'otelux') },
 	]) {
+		if (!supportsPlatform({ platforms })) {
+			packages = packages.filter(item => !packageMatches(item, directory));
+			continue;
+		}
 		if (!(await exists(path.join(directory, 'package.json')))) {
 			console.warn(`WARN Pi package source does not exist: ${directory}`);
 			continue;
 		}
-		const installed = packages.some(item => {
-			const source = typeof item === 'string' ? item : item?.source;
-			return typeof source === 'string' && !source.includes(':') && path.resolve(packageRoot, source) === directory;
-		});
+		const installed = packages.some(item => packageMatches(item, directory));
 		if (!installed) packages.push(entry);
 	}
 	config.packages = packages;
@@ -334,6 +345,7 @@ async function skillSources() {
 	const sources = new Map((await skillEntries(skillSource)).map(name => [name, path.join(skillSource, name)]));
 	const external = await readJson(externalSkillSourcesPath, { skills: [] });
 	for (const skill of external.skills || []) {
+		if (!supportsPlatform(skill)) continue;
 		if (sources.has(skill.name)) throw new Error(`Duplicate skill source: ${skill.name}`);
 		const source = expand(skill.source);
 		if (!(await exists(path.join(source, 'SKILL.md')))) {
@@ -457,7 +469,7 @@ async function loadManifest() {
 }
 
 function selectedServers(manifest, target) {
-	return Object.entries(manifest.servers).filter(([, server]) => !(server.excludeTargets || []).includes(target));
+	return Object.entries(manifest.servers).filter(([, server]) => supportsPlatform(server) && !(server.excludeTargets || []).includes(target));
 }
 
 function mergeManagedServers(existing, current, previouslyManaged) {
@@ -682,7 +694,7 @@ async function status() {
 
 function commandExists(executable) {
 	try {
-		execFileSync(process.platform === 'win32' ? 'where' : 'sh', process.platform === 'win32' ? [executable] : ['-lc', `command -v ${shellQuote(executable)}`], { stdio: 'ignore', timeout: 3000 });
+		execFileSync(process.platform === 'win32' ? 'where' : 'sh', process.platform === 'win32' ? [executable] : ['-c', `command -v ${shellQuote(executable)}`], { stdio: 'ignore', timeout: 3000 });
 		return true;
 	} catch {
 		return false;
@@ -698,6 +710,7 @@ async function validate() {
 	for (const name of await skillEntries(skillSource)) failures += await validateSkill(path.join(skillSource, name));
 	const external = await readJson(externalSkillSourcesPath, { skills: [] });
 	for (const skill of external.skills || []) {
+		if (!supportsPlatform(skill)) continue;
 		const source = expand(skill.source);
 		if (!(await exists(path.join(source, 'SKILL.md')))) {
 			console.warn(`WARN skill ${skill.name}: source does not exist: ${source}`);
@@ -708,6 +721,7 @@ async function validate() {
 	for (const name of await skillEntries(path.join(generated, 'prompt-skills'))) failures += await validateSkill(path.join(generated, 'prompt-skills', name));
 	const manifest = await loadManifest();
 	for (const [name, server] of Object.entries(manifest.servers)) {
+		if (!supportsPlatform(server)) continue;
 		if (server.transport === 'stdio' && expand(server.command).includes('/') && !(await exists(expand(server.command)))) console.warn(`WARN MCP ${name}: command does not exist: ${expand(server.command)}`);
 		for (const variable of [server.bearerEnv, ...(server.envPass || [])].filter(Boolean)) if (!process.env[variable]) console.warn(`WARN MCP ${name}: ${variable} is not set`);
 	}

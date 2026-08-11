@@ -57,7 +57,7 @@ Tool-owned skills stay in the owning repository. `skills/sources.json` lets boot
 | Tool | Scope | Delivery |
 | --- | --- | --- |
 | Slack | Copilot CLI and VS Code Agent Host only | Copilot plugin; deliberately absent from the canonical MCP registry and from Claude/Codex plugins |
-| Deskpal | Every harness | Native clients receive the `deskpal` stdio MCP entry; Pi loads Deskpal's thin product-owned extension, which preserves native image results and session cleanup |
+| Deskpal | Every harness on Linux | Native clients receive the `deskpal` stdio MCP entry; Pi loads Deskpal's thin product-owned extension, which preserves native image results and session cleanup. It is omitted on macOS and Windows because the implementation requires X11/uinput. |
 | OTelux | Every harness | Native clients receive the `otelux` stdio bridge plus tool-owned skills; Pi loads OTelux's thin product-owned extension over the same bridge |
 
 Pi intentionally has no built-in MCP client. Its author recommends ordinary CLI tools for progressive disclosure and specifically points MCP users to MCPorter. The generated `.generated/mcporter.json` has `imports: []`, so Pi sees exactly the target-filtered canonical registry and does not accidentally import Slack or plugin-only servers from another harness. Deskpal and OTelux are excluded from that Pi registry because their product-owned extensions expose the same MCP tools natively without a second server implementation.
@@ -66,7 +66,7 @@ Pi discovers both `~/.pi/agent/skills` and `~/.agents/skills`, with the former w
 
 User-authored prompt workflows such as `/sprint-in-yolo` and `/diff-check` use the concise `/name` form in Pi and are generated as skills for harnesses without a native prompt-command surface. Canonical prompts can declare an `argument-hint` when autocomplete guidance is useful. Bootstrap always injects `$ARGUMENTS` into the Claude/Copilot/Pi/OpenCode command projections so trailing input such as `/sprint-in-yolo fix the settings regression` is preserved. Skill projections instead tell the agent to consume additional text from the explicit invocation because skill-capable harnesses retain that text as user input rather than expanding command-template variables. VS Code uses its native prompt invocation input and `argument-hint`. Third-party and tool-provided capabilities such as Brave Search and OTelux remain ordinary Pi `/skill:name` commands. Bootstrap excludes only the generated copies of personal prompt workflows from Pi skill discovery, preventing duplicate autocomplete entries without changing Pi's native skill behavior.
 
-Deskpal and OTelux are local sibling tools. On a new machine, place their checkouts at `~/deskpal` and `~/otelux`, build/install them according to their own documentation, and then run bootstrap. `./setup.sh validate` warns when a local MCP executable or external skill source is missing.
+Deskpal and OTelux are local sibling tools. On a new machine, place OTelux at `~/otelux`; on Linux, also place Deskpal at `~/deskpal`. Build/install supported tools according to their own documentation, and then run bootstrap. Manifests and external skill sources can declare `platforms` (`darwin`, `linux`, or `win32`), so unsupported tools are omitted instead of producing broken projections. `./setup.sh validate` warns when a supported local MCP executable or external skill source is missing.
 
 ## Precedence and reload rules
 

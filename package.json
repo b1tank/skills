@@ -2,6 +2,9 @@
   "name": "b1tank-skills",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "node scripts/test-setup.mjs && PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s .github/skills/publish-artifact/tests -p 'test_*.py'"
   },

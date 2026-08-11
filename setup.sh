@@ -4,13 +4,13 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if ! command -v node >/dev/null 2>&1; then
-	echo "Error: Node.js 20 or newer is required." >&2
+	echo "Error: Node.js 24 or newer is required." >&2
 	exit 1
 fi
 
 node_major="$(node -p 'process.versions.node.split(".")[0]')"
-if (( node_major < 20 )); then
-	echo "Error: Node.js 20 or newer is required (found $(node --version))." >&2
+if (( node_major < 24 )); then
+	echo "Error: Node.js 24 or newer is required (found $(node --version))." >&2
 	exit 1
 fi
 

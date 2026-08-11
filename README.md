@@ -4,7 +4,7 @@ One source of truth for personal agent skills, slash prompts, custom agents, ins
 
 ## New machine
 
-Install any one supported agent, then:
+Install Node.js 24 or newer and any one supported agent, then:
 
 ```bash
 git clone git@github.com-b1tank:b1tank/skills.git ~/skills

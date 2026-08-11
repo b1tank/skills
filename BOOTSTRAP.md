@@ -1,6 +1,6 @@
 # Bootstrap a machine
 
-After installing at least one supported agent and cloning this repository:
+After installing Node.js 24 or newer, at least one supported agent, and cloning this repository:
 
 ```bash
 git clone git@github.com-b1tank:b1tank/skills.git ~/skills
@@ -32,7 +32,7 @@ Supported target names are `vscode`, `agent-host`, `copilot`, `claude`, `codex`,
 
 Credentials are intentionally absent from Git. Export the variables listed by `./setup.sh credentials`, then authenticate OAuth-capable servers with the client that uses them.
 
-Local tool servers remain owned by their own repositories. For the complete personal setup, clone/build Deskpal at `~/deskpal` and clone/install OTelux at `~/otelux` before bootstrap. Their MCP definitions stay centralized here, while OTelux skill content remains in the OTelux repository and is registered through `skills/sources.json`. Native MCP harnesses receive both servers directly; Pi loads each product's thin local extension, which adapts the same MCP implementation into native Pi tools.
+Local tool servers remain owned by their own repositories. For the complete personal setup, clone/install OTelux at `~/otelux` before bootstrap. On Linux, also clone/build Deskpal at `~/deskpal`; Deskpal is not projected on macOS or Windows because its X11/uinput implementation is Linux-only. Their MCP definitions stay centralized here, while tool-owned skill content is registered through `skills/sources.json`. Native MCP harnesses receive supported servers directly; Pi loads each supported product's thin local extension, which adapts the same MCP implementation into native Pi tools.
 
 Pi-only utility skills are installed directly from `https://github.com/badlogic/pi-skills` into `~/.pi/agent/skills/pi-skills`. They are upstream-owned dependencies, not canonical content in this repository, and are not projected to other harnesses.
 

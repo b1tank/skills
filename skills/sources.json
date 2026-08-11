@@ -4,7 +4,8 @@
   "skills": [
     {
       "name": "deskpal-desktop-control",
-      "source": "{home}/deskpal/skills/deskpal-desktop-control"
+      "source": "{home}/deskpal/skills/deskpal-desktop-control",
+      "platforms": ["linux"]
     },
     {
       "name": "analyze-trace",

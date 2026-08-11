@@ -10,11 +10,13 @@ import { fileURLToPath } from 'node:url';
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const home = await fs.mkdtemp(path.join(os.tmpdir(), 'b1tank-skills-test-'));
 const vscode = path.join(home, 'vscode-user');
+let darwinHome;
 const environment = {
 	...process.env,
 	HOME: home,
 	XDG_CONFIG_HOME: path.join(home, '.config'),
 	VSCODE_INSIDERS_USER_DATA_DIR: vscode,
+	B1TANK_SKILLS_PLATFORM: 'linux',
 };
 
 async function write(relative, contents) {
@@ -168,7 +170,36 @@ try {
 	assert.ok(archived.some(item => item.endsWith('diff-check')));
 	assert.ok(archived.some(item => item.endsWith('CLAUDE.md')));
 
+	darwinHome = await fs.mkdtemp(path.join(os.tmpdir(), 'b1tank-skills-darwin-test-'));
+	await fs.mkdir(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', '.git'), { recursive: true });
+	await fs.mkdir(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', 'brave-search'), { recursive: true });
+	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', '.git', 'config'), '[remote "origin"]\n\turl = https://github.com/badlogic/pi-skills\n');
+	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', 'brave-search', 'SKILL.md'), '---\nname: brave-search\ndescription: Upstream Pi skill.\n---\n');
+	for (const name of ['analyze-trace', 'investigate-incident', 'open-dashboard', 'service-health']) {
+		const directory = path.join(darwinHome, 'otelux', 'plugins', 'otelux', 'skills', name);
+		await fs.mkdir(directory, { recursive: true });
+		await fs.writeFile(path.join(directory, 'SKILL.md'), `---\nname: ${name}\ndescription: Test external skill.\n---\n`);
+	}
+	await fs.writeFile(path.join(darwinHome, 'otelux', 'plugins', 'otelux', 'package.json'), '{"name":"@otelux/pi-plugin"}\n');
+	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'settings.json'), '{"packages":["../../deskpal","keep-package"]}\n');
+	execFileSync('node', [path.join(repo, 'scripts', 'setup.mjs'), 'bootstrap', '--targets', 'codex,pi'], {
+		cwd: repo,
+		env: {
+			...process.env,
+			HOME: darwinHome,
+			XDG_CONFIG_HOME: path.join(darwinHome, '.config'),
+			B1TANK_SKILLS_PLATFORM: 'darwin',
+		},
+		encoding: 'utf8',
+	});
+	const darwinCodex = await fs.readFile(path.join(darwinHome, '.codex', 'config.toml'), 'utf8');
+	assert.doesNotMatch(darwinCodex, /mcp_servers\."deskpal"/);
+	await assert.rejects(fs.access(path.join(darwinHome, '.agents', 'skills', 'deskpal-desktop-control')));
+	const darwinPi = JSON.parse(await fs.readFile(path.join(darwinHome, '.pi', 'agent', 'settings.json'), 'utf8'));
+	assert.deepEqual(darwinPi.packages, ['keep-package', '../../otelux/plugins/otelux']);
+
 	console.log('Cross-harness bootstrap test passed.');
 } finally {
 	await fs.rm(home, { recursive: true, force: true });
+	if (darwinHome) await fs.rm(darwinHome, { recursive: true, force: true });
 }

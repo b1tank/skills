@@ -35,6 +35,7 @@
       "command": "{home}/deskpal/build/deskpal",
       "args": ["--allow-exec"],
       "envPass": ["DISPLAY"],
+      "platforms": ["linux"],
       "excludeTargets": ["pi"]
     },
     "otelux": {
