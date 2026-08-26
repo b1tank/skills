@@ -1,6 +1,7 @@
 {
   "name": "b1tank-skills",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=24"
