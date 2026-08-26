@@ -1,7 +1,6 @@
 {
   "$schema": "./servers.schema.json",
   "version": 1,
-  "retiredServers": ["workiq"],
   "credentials": {
     "GITHUB_PAT": "Bearer token for the GitHub MCP server. Prefer each client's OAuth flow when available."
   },

@@ -151,7 +151,6 @@ try {
 	const mcporter = JSON.parse(await fs.readFile(path.join(repo, '.generated', 'mcporter.json'), 'utf8'));
 	assert.ok(!mcporter.mcpServers.deskpal);
 	assert.ok(!mcporter.mcpServers.otelux);
-	assert.ok(!mcporter.mcpServers.workiq);
 	assert.equal(mcporter.mcpServers.github.command, 'npx');
 	assert.deepEqual(mcporter.mcpServers.github.args.slice(0, 2), ['-y', 'mcp-remote@0.1.38']);
 	assert.ok(mcporter.mcpServers.github.args.includes('Authorization: Bearer ${GITHUB_PAT}'));

@@ -361,7 +361,6 @@ async function consolidateCodexDuplicates() {
 	const codexSkills = path.join(home, '.codex', 'skills');
 	const names = new Set((await skillSources()).map(([name]) => name));
 	for (const name of await skillEntries(path.join(generated, 'prompt-skills'))) names.add(name);
-	for (const alias of ['splunk-configure']) names.add(alias);
 	for (const name of names) {
 		const item = path.join(codexSkills, name);
 		if (await lexists(item)) await backup(item);
