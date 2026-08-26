@@ -27,12 +27,11 @@
     "playwright": {
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--browser=msedge"]
+      "args": ["-y", "@playwright/mcp@0.0.79", "--browser=chromium"]
     },
     "deskpal": {
       "transport": "stdio",
       "command": "{home}/deskpal/build/deskpal",
-      "args": ["--allow-exec"],
       "envPass": ["DISPLAY"],
       "platforms": ["linux"],
       "excludeTargets": ["pi"]

@@ -7,6 +7,12 @@ The repository is an opinionated personal configuration rather than a general
 framework. Its main goal is to keep one reviewed source of truth instead of
 maintaining a different copy for every agent harness.
 
+> **Early open-source release.** The bootstrap and tests are exercised on macOS
+> and Ubuntu Linux. Omarchy, Arch Linux, and Windows have not yet been separately
+> qualified. Always run the dry-run first. Deskpal and OTelux integrations are
+> optional and require their sibling repositories; process execution and file
+> access remain opt-in.
+
 ## Supported harnesses
 
 The bootstrap currently projects compatible customizations into:
@@ -51,7 +57,7 @@ Requirements:
 Clone the repository and inspect what bootstrap would change:
 
 ```bash
-git clone git@github.com:b1tank/skills.git ~/skills
+git clone https://github.com/b1tank/skills.git ~/skills
 cd ~/skills
 ./setup.sh status
 ./setup.sh bootstrap --dry-run

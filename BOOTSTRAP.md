@@ -3,7 +3,7 @@
 After installing Node.js 24 or newer, at least one supported agent, and cloning this repository:
 
 ```bash
-git clone git@github.com-b1tank:b1tank/skills.git ~/skills
+git clone https://github.com/b1tank/skills.git ~/skills
 cd ~/skills
 ./setup.sh status
 ./setup.sh bootstrap

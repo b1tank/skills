@@ -81,7 +81,7 @@ Deskpal and OTelux are local sibling tools. On a new machine, place OTelux at `~
 On a new machine:
 
 ```bash
-git clone git@github.com-b1tank:b1tank/skills.git ~/skills
+git clone https://github.com/b1tank/skills.git ~/skills
 cd ~/skills
 ./setup.sh status
 ./setup.sh bootstrap --dry-run
