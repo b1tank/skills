@@ -18,7 +18,6 @@ const agentSource = path.join(repo, '.github', 'agents');
 const instructionSource = path.join(repo, '.github', 'instructions');
 const externalSkillSourcesPath = path.join(repo, 'skills', 'sources.json');
 const manifestPath = path.join(repo, 'mcp', 'servers.json');
-const piSkillsRepository = 'https://github.com/badlogic/pi-skills';
 const managedStatePath = path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'b1tank-skills', 'state.json');
 const stamp = new Date().toISOString().replaceAll(':', '').replaceAll('.', '');
 const backupRoot = path.join(path.dirname(managedStatePath), 'backups', stamp);
@@ -281,35 +280,26 @@ async function installSkills() {
 	if (targets.has('claude')) {
 		const claude = path.join(home, '.claude', 'skills');
 		for (const [name, source] of sources) await installLink(source, path.join(claude, name));
-		for (const container of ['obstudio', 'pi-skills']) {
+		for (const container of ['obstudio']) {
 			const item = path.join(claude, container);
 			if (await lexists(item)) await backup(item);
 		}
 	}
 
 	if (targets.has('codex')) await consolidateCodexDuplicates();
-	if (targets.has('pi')) await consolidatePiDuplicates();
+	if (targets.has('pi')) await installPiSkills(sources, sourceNames);
 }
 
-async function installPiUpstreamSkills() {
-	const destination = path.join(home, '.pi', 'agent', 'skills', 'pi-skills');
-	const validCheckout = await exists(path.join(destination, '.git'))
-		&& await exists(path.join(destination, 'brave-search', 'SKILL.md'));
-	if (!validCheckout) {
-		if (await lexists(destination)) await backup(destination);
-		log('clone', `${piSkillsRepository} -> ${destination}`);
-		if (dryRun) return;
-		await fs.mkdir(path.dirname(destination), { recursive: true });
-		execFileSync('git', ['clone', '--depth', '1', piSkillsRepository, destination], { stdio: 'inherit' });
-	} else {
-		log('upstream', destination);
+async function installPiSkills(sources, sourceNames) {
+	const piSkills = path.join(home, '.pi', 'agent', 'skills');
+	for (const container of ['obstudio']) {
+		const item = path.join(piSkills, container);
+		if (await lexists(item)) await backup(item);
 	}
-
-	for (const name of ['brave-search', 'browser-tools', 'youtube-transcript']) {
-		const directory = path.join(destination, name);
-		if (!(await exists(path.join(directory, 'package.json'))) || await exists(path.join(directory, 'node_modules'))) continue;
-		log('npm install', directory);
-		if (!dryRun) execFileSync('npm', ['install', '--no-audit', '--no-fund'], { cwd: directory, stdio: 'inherit' });
+	for (const [name, source] of sources) await installLink(source, path.join(piSkills, name));
+	for (const name of await skillEntries(path.join(generated, 'prompt-skills'))) {
+		if (sourceNames.has(name)) continue;
+		await installLink(path.join(generated, 'prompt-skills', name), path.join(piSkills, name));
 	}
 }
 
@@ -365,22 +355,8 @@ async function consolidateCodexDuplicates() {
 		const item = path.join(codexSkills, name);
 		if (await lexists(item)) await backup(item);
 	}
-	for (const container of ['obstudio', 'pi-skills']) {
-		const item = path.join(codexSkills, container);
-		if (await lexists(item)) await backup(item);
-	}
-}
-
-async function consolidatePiDuplicates() {
-	const piSkills = path.join(home, '.pi', 'agent', 'skills');
-	const names = new Set((await skillSources()).map(([name]) => name));
-	for (const name of await skillEntries(path.join(generated, 'prompt-skills'))) names.add(name);
-	for (const name of names) {
-		const item = path.join(piSkills, name);
-		if (await lexists(item)) await backup(item);
-	}
 	for (const container of ['obstudio']) {
-		const item = path.join(piSkills, container);
+		const item = path.join(codexSkills, container);
 		if (await lexists(item)) await backup(item);
 	}
 }
@@ -780,7 +756,6 @@ async function bootstrap() {
 	await generateFiles();
 	await cleanProjectionRoots();
 	await installSkills();
-	if (targets.has('pi')) await installPiUpstreamSkills();
 	await installPromptsAndAgents();
 	if (targets.has('pi')) {
 		await installPiProductPackages();

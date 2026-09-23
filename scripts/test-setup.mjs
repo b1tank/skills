@@ -55,8 +55,6 @@ try {
 	await write('.agents/skills/diff-check/SKILL.md', 'old conflicting skill\n');
 	await write('.agents/skills/legacy.work-skills-backup-old/SKILL.md', 'legacy backup\n');
 	await write('.pi/agent/skills/diff-check/SKILL.md', 'old Pi-specific duplicate\n');
-	await write('.pi/agent/skills/pi-skills/.git/config', '[remote "origin"]\n\turl = https://github.com/badlogic/pi-skills\n');
-	await write('.pi/agent/skills/pi-skills/brave-search/SKILL.md', '---\nname: brave-search\ndescription: Upstream Pi skill.\n---\n');
 	await fs.mkdir(path.join(home, '.pi', 'agent', 'extensions'), { recursive: true });
 	await fs.symlink(path.join(repo, 'integrations', 'pi', 'mcp-bridge.ts'), path.join(home, '.pi', 'agent', 'extensions', 'work-skills-mcp.ts'));
 	await fs.mkdir(path.join(home, '.pi', 'agent', 'prompts'), { recursive: true });
@@ -112,6 +110,10 @@ try {
 		'.agents/skills/publish-artifact/scripts/publish_artifact.py',
 		'.agents/skills/analyze-trace/SKILL.md',
 		'.agents/skills/sprint-in-yolo/SKILL.md',
+		'.pi/agent/skills/diff-check/SKILL.md',
+		'.pi/agent/skills/create-prompt-skill/SKILL.md',
+		'.pi/agent/skills/analyze-trace/SKILL.md',
+		'.pi/agent/skills/sprint-in-yolo/SKILL.md',
 		'.claude/commands/sprint-in-yolo.md',
 		'.codex/agents/strategy-partner.toml',
 		'.pi/agent/prompts/diff-check.md',
@@ -135,6 +137,7 @@ try {
 	for (const name of promptNames) {
 		const command = await fs.readFile(path.join(home, '.pi', 'agent', 'prompts', `${name}.md`), 'utf8');
 		assert.match(command, /## Invocation input\n\n\$ARGUMENTS/, `${name} should forward slash-command arguments`);
+		await fs.access(path.join(home, '.pi', 'agent', 'skills', name, 'SKILL.md'));
 		try {
 			await fs.access(path.join(repo, '.github', 'skills', name, 'SKILL.md'));
 			continue;
@@ -155,8 +158,12 @@ try {
 	assert.deepEqual(mcporter.mcpServers.github.args.slice(0, 2), ['-y', 'mcp-remote@0.1.38']);
 	assert.ok(mcporter.mcpServers.github.args.includes('Authorization: Bearer ${GITHUB_PAT}'));
 	await assert.rejects(fs.access(path.join(home, '.pi', 'agent', 'extensions', 'work-skills-mcp.ts')));
-	await assert.rejects(fs.access(path.join(home, '.pi', 'agent', 'skills', 'diff-check')));
-	await fs.access(path.join(home, '.pi', 'agent', 'skills', 'pi-skills', 'brave-search', 'SKILL.md'));
+	assert.equal(await fs.realpath(path.join(home, '.pi', 'agent', 'skills', 'diff-check')), path.join(repo, '.github', 'skills', 'diff-check'));
+	assert.equal(
+		await fs.realpath(path.join(home, '.pi', 'agent', 'skills', 'analyze-trace')),
+		await fs.realpath(path.join(home, 'otelux', 'plugins', 'otelux', 'skills', 'analyze-trace')),
+	);
+	await assert.rejects(fs.access(path.join(home, '.pi', 'agent', 'skills', 'pi-skills')));
 	await assert.rejects(fs.access(path.join(home, '.agents', 'skills', 'legacy.work-skills-backup-old')));
 	for (const item of [
 		'.copilot/copilot-instructions.md',
@@ -170,16 +177,13 @@ try {
 	assert.ok(archived.some(item => item.endsWith('CLAUDE.md')));
 
 	darwinHome = await fs.mkdtemp(path.join(os.tmpdir(), 'b1tank-skills-darwin-test-'));
-	await fs.mkdir(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', '.git'), { recursive: true });
-	await fs.mkdir(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', 'brave-search'), { recursive: true });
-	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', '.git', 'config'), '[remote "origin"]\n\turl = https://github.com/badlogic/pi-skills\n');
-	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills', 'brave-search', 'SKILL.md'), '---\nname: brave-search\ndescription: Upstream Pi skill.\n---\n');
 	for (const name of ['analyze-trace', 'investigate-incident', 'open-dashboard', 'service-health']) {
 		const directory = path.join(darwinHome, 'otelux', 'plugins', 'otelux', 'skills', name);
 		await fs.mkdir(directory, { recursive: true });
 		await fs.writeFile(path.join(directory, 'SKILL.md'), `---\nname: ${name}\ndescription: Test external skill.\n---\n`);
 	}
 	await fs.writeFile(path.join(darwinHome, 'otelux', 'plugins', 'otelux', 'package.json'), '{"name":"@otelux/pi-plugin"}\n');
+	await fs.mkdir(path.join(darwinHome, '.pi', 'agent'), { recursive: true });
 	await fs.writeFile(path.join(darwinHome, '.pi', 'agent', 'settings.json'), '{"packages":["../../deskpal","keep-package"]}\n');
 	execFileSync('node', [path.join(repo, 'scripts', 'setup.mjs'), 'bootstrap', '--targets', 'codex,pi'], {
 		cwd: repo,
@@ -196,6 +200,7 @@ try {
 	await assert.rejects(fs.access(path.join(darwinHome, '.agents', 'skills', 'deskpal-desktop-control')));
 	const darwinPi = JSON.parse(await fs.readFile(path.join(darwinHome, '.pi', 'agent', 'settings.json'), 'utf8'));
 	assert.deepEqual(darwinPi.packages, ['keep-package', '../../otelux/plugins/otelux']);
+	await assert.rejects(fs.access(path.join(darwinHome, '.pi', 'agent', 'skills', 'pi-skills')));
 
 	console.log('Cross-harness bootstrap test passed.');
 } finally {

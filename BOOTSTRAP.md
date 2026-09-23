@@ -34,6 +34,4 @@ Credentials are intentionally absent from Git. Export the variables listed by `.
 
 Local tool servers remain owned by their own repositories. For the complete personal setup, clone/install OTelux at `~/otelux` before bootstrap. On Linux, also clone/build Deskpal at `~/deskpal`; Deskpal is not projected on macOS or Windows because its X11/uinput implementation is Linux-only. Their MCP definitions stay centralized here, while tool-owned skill content is registered through `skills/sources.json`. Native MCP harnesses receive supported servers directly; Pi loads each supported product's thin local extension, which adapts the same MCP implementation into native Pi tools.
 
-Pi-only utility skills are installed directly from `https://github.com/badlogic/pi-skills` into `~/.pi/agent/skills/pi-skills`. They are upstream-owned dependencies, not canonical content in this repository, and are not projected to other harnesses.
-
 See [docs/agent-customization-compatibility.md](docs/agent-customization-compatibility.md) for paths, precedence, limitations, and troubleshooting.
