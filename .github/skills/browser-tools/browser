@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+skill_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cli="$skill_dir/node_modules/.bin/chrome-devtools"
+workspace_id="$(node -e 'process.stdout.write(require("node:crypto").createHash("sha256").update(process.argv[1]).digest("hex").slice(0, 16))' "$PWD")"
+session_id="6272616f77736572-$workspace_id" # Isolate by project and from other DevTools CLI users.
+
+if [[ ! -x "$cli" ]]; then
+  echo "Chrome DevTools CLI is missing. Run: cd \"$skill_dir\" && npm ci --ignore-scripts" >&2
+  exit 1
+fi
+
+# Keep the browser bridge local and avoid optional usage/CrUX reporting.
+export CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1
+
+start_auto_connect() {
+  "$cli" start --sessionId="$session_id" --auto-connect --channel=stable \
+    --workspace="$PWD" --performance-crux=false "$@"
+}
+
+ensure_auto_connect() {
+  local status
+  status="$("$cli" status --sessionId="$session_id" 2>&1)"
+
+  if [[ "$status" == *"daemon is not running"* ]]; then
+    start_auto_connect
+  elif [[ "$status" == *"--auto-connect"* ]]; then
+    : # Reuse this skill's existing auto-connected daemon.
+  else
+    echo "This skill's DevTools daemon is running without auto-connect. Run '$0 stop', then retry." >&2
+    return 1
+  fi
+}
+
+case "${1:-}" in
+  start)
+    shift
+    start_auto_connect "$@"
+    ;;
+  connect)
+    ensure_auto_connect
+    ;;
+  stop|status|-h|--help|--version)
+    exec "$cli" "$@" --sessionId="$session_id"
+    ;;
+  "")
+    exec "$cli" --help --sessionId="$session_id"
+    ;;
+  *)
+    ensure_auto_connect
+    exec "$cli" "$@" --sessionId="$session_id"
+    ;;
+esac
