@@ -48,14 +48,19 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
      `if __name__ == "__main__":` block containing only `pass` so the learner
      can write their own experiments. Do not insert example calls or hints.
    - **Python tests:** keep them interview-simple: a direct sibling import,
-     a `main()` function, a named case list, a loop with plain `assert` checks
-     and helpful failure messages, and `if __name__ == "__main__": main()`.
+     a `main()` function, a plain list of input/expected-output tuples, a loop
+     that calls `Solution` and compares the result with a plain `assert`, and
+     `if __name__ == "__main__": main()`. Each tuple contains only the method
+     inputs and expected output (for example, `(nums, k, expected)`). Describe
+     cases with comments, never description keys, name strings, or extra label
+     fields. Keep the loop easy to write under interview pressure; a short
+     assertion message is enough.
      Do not use `unittest`, `pytest`, test classes, dynamic imports, or another
      test framework. A final passed-case count is enough; no custom runner is
-     needed. Include official examples plus a small, named set of nonredundant
-     common and edge cases: minimum sizes, boundary parameters, duplicates,
-     ordering, signs/zero, value limits, and
-     representative maximum-size inputs where relevant and practical. For
+     needed. Include official examples plus a small set of nonredundant common
+     and edge cases: minimum sizes, boundary parameters, duplicates, ordering,
+     signs/zero, value limits, and representative maximum-size inputs where
+     relevant and practical. For
      design problems, test operation sequences and state transitions. Include
      expected outputs, isolate mutable inputs, and do not assume immutability
      or behavior outside the stated contract. Do not embed a reference solution
@@ -69,8 +74,8 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
    disables assertions) and confirm the blank scaffold produces an assertion
    failure, not an import error. Plain assertions stop at the first failing case.
    Independently check expected outputs; any temporary reference used for
-   validation must remain outside the saved
-   practice files. Confirm all exercise bodies and the scaffold's main block
+   validation must remain outside the saved practice files. Confirm all
+   exercise bodies and the scaffold's main block
    remain `pass`, then review the diff for unrelated changes and spoilers.
 6. Report the resolved problem, three file paths, run commands, source gaps,
    and verification results. Clearly distinguish expected unsolved-test
