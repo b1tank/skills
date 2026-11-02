@@ -1,6 +1,6 @@
 ---
-name: scaffold-leetcode
-description: Identify a LeetCode problem from a number, title, URL, screenshot, or vague description and create a sourced statement, blank Python scaffold, and focused tests without solving it.
+name: leetcode-it
+description: Identify a LeetCode problem from a number, title, URL, screenshot, or vague description and create a sourced statement, blank Python scaffold, and plain-assert Python tests without solving it.
 ---
 
 Use the problem identifier or description supplied with the invocation. If none
@@ -12,24 +12,32 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
    where possible. If a vague description has multiple plausible matches, show
    the likely candidates and ask for clarification before creating files.
 2. Retrieve the statement and metadata from the official description page or
-   public problem API when available. Use supplied screenshots and clearly
-   attributed public mirrors as fallbacks. Do not bypass authentication,
-   paywalls, or anti-bot protections, or change tool/security configuration just
-   to fetch the page. Never invent unavailable fields or persist personal
-   account state, credentials, or private browser output.
+   public problem API when available. If a problem, company tags, hints, or
+   other metadata are premium-locked or inaccessible, actively web-search for
+   the missing information on other public sites; do not stop at the lock icon
+   or merely label it unavailable. Use supplied screenshots and attributed
+   public mirrors as fallbacks. Verify the problem identity and distinguish
+   third-party claims from current official metadata. Only mark a field
+   unavailable after a reasonable public-source search finds nothing reliable.
+   Do not bypass authentication, paywalls, or anti-bot protections, or change
+   tool/security configuration just to fetch a page. Never invent fields or
+   persist personal account state, credentials, or private browser output.
 3. Create exactly three practice files in a location consistent with the
-   repository. Reuse its naming convention, including the problem number and
-   slug; choose an importable test filename. Do not overwrite existing practice
-   work without confirmation. Do not add a generator, dependencies, or a
-   solution unless separately requested.
+   repository. Include the problem number and slug in filenames, but use valid
+   Python module names for both Python files so tests can use a simple sibling
+   import (for example, `from leetcode_123_problem_slug import Solution`). Avoid
+   dynamic import machinery and numeric-leading or hyphenated Python filenames.
+   Do not overwrite existing practice work without confirmation. Do not add a
+   generator, dependencies, or a solution unless separately requested.
    - **Problem Markdown:** format the full statement, examples, constraints,
      follow-up, canonical reference link, difficulty, topic tags, language,
      class/method signature, and input/output contract. Include other metadata
      actually available, such as acceptance/submission statistics, hints,
      company tags, and similar-question links. Label dynamic values with their
      source and capture date when known; distinguish screenshot snapshots and
-     third-party lists from live official metadata. Mark relevant inaccessible
-     or premium-only fields as unavailable, rather than guessing. Keep optional
+     third-party lists from live official metadata. For locked fields, include
+     reliable public-source findings with attribution; only mark them unavailable
+     if the fallback search was unsuccessful. Never guess. Keep optional
      hints and spoilers collapsed; do not include editorials or algorithms.
      Attribute fallback sources and warn if a reference contains solutions.
    - **Python scaffold:** match LeetCode's class, method names, argument order,
@@ -39,11 +47,14 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
      Leave each exercise method body as `pass`. Add an
      `if __name__ == "__main__":` block containing only `pass` so the learner
      can write their own experiments. Do not insert example calls or hints.
-   - **Python tests:** use the repository's test framework, or standard-library
-     `unittest` if none exists. Load the scaffold robustly even when its filename
-     contains a numeric prefix or hyphens. Include official examples plus a
-     small, named set of nonredundant common and edge cases: minimum sizes,
-     boundary parameters, duplicates, ordering, signs/zero, value limits, and
+   - **Python tests:** keep them interview-simple: a direct sibling import,
+     a `main()` function, a named case list, a loop with plain `assert` checks
+     and helpful failure messages, and `if __name__ == "__main__": main()`.
+     Do not use `unittest`, `pytest`, test classes, dynamic imports, or another
+     test framework. A final passed-case count is enough; no custom runner is
+     needed. Include official examples plus a small, named set of nonredundant
+     common and edge cases: minimum sizes, boundary parameters, duplicates,
+     ordering, signs/zero, value limits, and
      representative maximum-size inputs where relevant and practical. For
      design problems, test operation sequences and state transitions. Include
      expected outputs, isolate mutable inputs, and do not assume immutability
@@ -53,10 +64,12 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
    from the repository root, plus the Python/runtime requirement and a concise
    coverage summary. Explain that tests intentionally fail until implementation
    and that representative coverage is not exhaustive judge coverage.
-5. Verify Python syntax, module loading, test discovery, and the documented
-   commands. Run the tests and confirm the blank scaffold produces assertion
-   failures, not import or harness errors. Independently check expected outputs;
-   any temporary reference used for validation must remain outside the saved
+5. Verify Python syntax, the simple sibling import, and the documented direct
+   execution commands. Run tests with normal Python (not `python -O`, which
+   disables assertions) and confirm the blank scaffold produces an assertion
+   failure, not an import error. Plain assertions stop at the first failing case.
+   Independently check expected outputs; any temporary reference used for
+   validation must remain outside the saved
    practice files. Confirm all exercise bodies and the scaffold's main block
    remain `pass`, then review the diff for unrelated changes and spoilers.
 6. Report the resolved problem, three file paths, run commands, source gaps,
