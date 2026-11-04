@@ -6,22 +6,41 @@ description: Identify a LeetCode problem from a number, title, URL, screenshot, 
 Use the problem identifier or description supplied with the invocation. If none
 is supplied, ask for a number, title, URL, screenshot, or description and stop.
 
+## Repository scope
+
+Always use `~/joy` as the repository for this workflow, regardless of the
+invocation's current working directory. Resolve `~` to the user's home directory,
+read that repository's instructions, inspect its worktree, and place the three
+practice files in its existing topic-based layout. Do not create LeetCode files
+or commits in the invocation repository. If `~/joy` is missing or is not a Git
+repository, ask the user how to proceed rather than falling back elsewhere.
+Run validation and any explicitly requested solution updates or commits in
+`~/joy`; verify the Git repository root before staging or committing. Document
+run commands from the `~/joy` repository root and clearly report that location.
+
+Prioritize quick problem setup, not metadata research. Once the problem identity,
+statement, examples, constraints, and interface are clear, stop source retrieval
+and create the practice files.
+
 1. Read repository instructions, inspect the worktree and existing problem
    layout, and preserve unrelated changes and existing solutions. Resolve the
    input to a canonical LeetCode number, title, and slug using official sources
    where possible. If a vague description has multiple plausible matches, show
    the likely candidates and ask for clarification before creating files.
-2. Retrieve the statement and metadata from the official description page or
-   public problem API when available. If a problem, company tags, hints, or
-   other metadata are premium-locked or inaccessible, actively web-search for
-   the missing information on other public sites; do not stop at the lock icon
-   or merely label it unavailable. Use supplied screenshots and attributed
-   public mirrors as fallbacks. Verify the problem identity and distinguish
-   third-party claims from current official metadata. Only mark a field
-   unavailable after a reasonable public-source search finds nothing reliable.
-   Do not bypass authentication, paywalls, or anti-bot protections, or change
-   tool/security configuration just to fetch a page. Never invent fields or
-   persist personal account state, credentials, or private browser output.
+2. Retrieve the problem statement with minimal source requests. Start with the
+   supplied URL or screenshots; prefer official descriptions or public problem
+   APIs when readily accessible. If blocked or incomplete, use an attributed
+   public mirror rather than repeatedly trying official endpoints. Search only
+   as necessary to identify the problem or recover its statement, examples,
+   constraints, or class/method interface. Save optional metadata only if it is
+   already present in supplied material or the responses used to obtain the
+   problem. Do not make additional searches, fetches, or API calls for metadata
+   such as difficulty, topic tags, companies, hints, statistics, or similar
+   questions, including locked fields. Do not cross-check or enrich optional
+   metadata with extra sources; omit missing fields without a missing-metadata
+   audit. Do not bypass authentication, paywalls, or anti-bot protections, or
+   change tool/security configuration just to fetch a page. Never invent fields
+   or persist personal account state, credentials, or private browser output.
 3. Create exactly three practice files in a location consistent with the
    repository. Include the problem number and slug in filenames, but use valid
    Python module names for both Python files so tests can use a simple sibling
@@ -30,16 +49,17 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
    Do not overwrite existing practice work without confirmation. Do not add a
    generator, dependencies, or a solution unless separately requested.
    - **Problem Markdown:** format the full statement, examples, constraints,
-     follow-up, canonical reference link, difficulty, topic tags, language,
-     class/method signature, and input/output contract. Include other metadata
-     actually available, such as acceptance/submission statistics, hints,
-     company tags, and similar-question links. Label dynamic values with their
-     source and capture date when known; distinguish screenshot snapshots and
-     third-party lists from live official metadata. For locked fields, include
-     reliable public-source findings with attribution; only mark them unavailable
-     if the fallback search was unsuccessful. Never guess. Keep optional
-     hints and spoilers collapsed; do not include editorials or algorithms.
-     Attribute fallback sources and warn if a reference contains solutions.
+     any supplied follow-up, canonical reference link, language, class/method
+     signature, and input/output contract. Optionally save metadata already
+     encountered while obtaining the problem, such as difficulty, topic tags,
+     acceptance/submission statistics, hints, companies, or similar questions;
+     do not retrieve anything extra for it. Attribute saved metadata, label
+     dynamic values with their capture date when known, and distinguish
+     third-party claims or screenshot snapshots from live official metadata.
+     Omit absent optional fields; do not add unavailable-field tables or long
+     source-availability reports. Never guess. Keep optional hints and spoilers
+     collapsed; do not include editorials or algorithms. Keep source notes brief,
+     attribute fallback sources, and warn if a reference contains solutions.
    - **Python scaffold:** match LeetCode's class, method names, argument order,
      annotations, and any required helper structures as closely as possible.
      Use the requested typing style (default to modern `list[int]` when
@@ -77,7 +97,8 @@ is supplied, ask for a number, title, URL, screenshot, or description and stop.
    validation must remain outside the saved practice files. Confirm all
    exercise bodies and the scaffold's main block
    remain `pass`, then review the diff for unrelated changes and spoilers.
-6. Report the resolved problem, three file paths, run commands, source gaps,
-   and verification results. Clearly distinguish expected unsolved-test
-   failures from setup defects. Do not commit or push practice files unless
-   explicitly requested.
+6. Briefly report the resolved problem, three file paths, run commands, and
+   verification results. Mention source gaps only if they affect the statement
+   or practice contract, not missing optional metadata. Clearly distinguish
+   expected unsolved-test failures from setup defects. Do not commit or push
+   practice files unless explicitly requested.
