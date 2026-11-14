@@ -39,6 +39,12 @@ cd ~/skills
 
 See [BOOTSTRAP.md](BOOTSTRAP.md) for selective targets, imports, and credentials. See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
 
+## One portal: `/serve`
+
+Use `/serve [file-or-bundle]` for generated HTML, reports and other artifacts. It loads the single canonical `.github/skills/serve/` workflow, automatically starts/reuses the LAN portal at **`0.0.0.0:12345`**, and returns phone-ready links. `/serve --live www/` explicitly follows edits; `/serve --app http://127.0.0.1:8765/ --name "Meta lab"` registers an approved, already LAN-reachable backend as a portal card rather than copying or proxying its HTML. `/serve --list` shows current entries.
+
+Existing storage and optional 8787 compatibility listeners are retained. Static snapshots and live bundles share the portal; app backends may use their own ports, but are reached through the same bookmark. The helper never silently kills another listener or exposes a repository root. Login/reboot persistence is available through the skill's optional macOS launchd/Linux systemd installer. Run `/reload` in Pi after bootstrap to discover the new command.
+
 ## Security
 
 Credentials are not stored in this repository. MCP credentials must come from environment variables or client OAuth stores. List expected variables with:

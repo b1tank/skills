@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 from functools import partial
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -17,6 +18,7 @@ import shutil
 from urllib.parse import quote, urlsplit
 
 from publish_artifact import publication_sort_key, publication_time
+import app_registry
 
 DEFAULT_ROOT = Path.home() / ".local" / "share" / "agent-artifacts" / "public"
 API_PREFIX = "/__api/artifacts"
@@ -36,7 +38,7 @@ DASHBOARD_HTML = r'''<!doctype html>
 <body>
 <main class="shell">
 <header><div><div class="eyebrow">LAN / VPN library</div><h1>Agent Artifacts</h1><p class="subtitle">Newest publications first, from the top-left. Card dates show publication time, not source-file modification time. Live items track originals; snapshots stay unchanged.</p></div><button class="refresh" id="refresh">↻ Refresh</button></header>
-<section class="toolbar"><label class="search"><input id="search" type="search" placeholder="Search artifacts…" autocomplete="off"></label><div class="filters" id="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="snapshot">Snapshots</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="broken">Broken</button></div></section>
+<section class="toolbar"><label class="search"><input id="search" type="search" placeholder="Search artifacts…" autocomplete="off"></label><div class="filters" id="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="snapshot">Snapshots</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="app">Apps</button><button class="filter" data-filter="broken">Broken</button></div></section>
 <section class="grid" id="grid"><div class="empty loading"><strong>Loading artifacts…</strong></div></section>
 </main><div class="toast" id="toast" role="status"></div>
 <script>
@@ -46,9 +48,9 @@ const fmtTime=s=>new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400)}
 function button(label,kind,fn){const b=document.createElement('button');b.className='action '+(kind||'');b.textContent=label;b.addEventListener('click',fn);return b}
 async function copyUrl(url){try{await navigator.clipboard.writeText(url)}catch{const i=document.createElement('input');i.value=url;document.body.append(i);i.select();document.execCommand('copy');i.remove()}toast('URL copied')}
-function render(){const query=$('#search').value.trim().toLowerCase();const shown=artifacts.filter(a=>(filter==='all'||a.mode===filter||(filter==='broken'&&a.broken))&&(!query||a.title.toLowerCase().includes(query)||a.name.toLowerCase().includes(query)));grid.replaceChildren();if(!shown.length){const e=document.createElement('div');e.className='empty';e.innerHTML='<strong>No matching artifacts</strong>Try another filter or publish a new file.';grid.append(e);return}for(const a of shown){const card=document.createElement('article');card.className='card';const top=document.createElement('div');top.className='card-top';const icon=document.createElement('div');icon.className='icon';icon.textContent=a.icon;const badge=document.createElement('span');badge.className='badge '+(a.broken?'broken':a.mode);badge.textContent=a.broken?'broken':a.mode;top.append(icon,badge);const title=document.createElement('h2');title.textContent=a.title;const meta=document.createElement('div');meta.className='meta';meta.textContent=(a.published_at?'Published ':'Modified ')+fmtTime(a.published_at||a.modified)+' · '+fmtSize(a.size);const actions=document.createElement('div');actions.className='actions';const url=new URL(a.open_path,location.href).href;if(!a.broken){const open=document.createElement('a');open.className='action primary';open.href=url;open.textContent='Open';actions.append(open);actions.append(button('Copy','',()=>copyUrl(url)))}actions.append(button('Delete','delete',()=>removeArtifact(a)));card.append(top,title,meta,actions);grid.append(card)}}
+function render(){const query=$('#search').value.trim().toLowerCase();const shown=artifacts.filter(a=>(filter==='all'||a.mode===filter||(filter==='broken'&&a.broken))&&(!query||a.title.toLowerCase().includes(query)||a.name.toLowerCase().includes(query)));grid.replaceChildren();if(!shown.length){const e=document.createElement('div');e.className='empty';e.innerHTML='<strong>No matching artifacts</strong>Try another filter or publish a new file.';grid.append(e);return}for(const a of shown){const card=document.createElement('article');card.className='card';const top=document.createElement('div');top.className='card-top';const icon=document.createElement('div');icon.className='icon';icon.textContent=a.icon;const badge=document.createElement('span');badge.className='badge '+(a.broken?'broken':a.mode);badge.textContent=a.mode==='app'?(a.running?'running':'stopped'):(a.broken?'broken':a.mode);top.append(icon,badge);const title=document.createElement('h2');title.textContent=a.title;const meta=document.createElement('div');meta.className='meta';meta.textContent=(a.published_at?'Published ':'Modified ')+fmtTime(a.published_at||a.modified)+' · '+fmtSize(a.size);const actions=document.createElement('div');actions.className='actions';const target=new URL(a.app_url||a.open_path,location.href);if(a.mode==='app')target.hostname=location.hostname;const url=target.href;if(!a.broken){const open=document.createElement('a');open.className='action primary';open.href=url;open.textContent='Open';actions.append(open);actions.append(button('Copy','',()=>copyUrl(url)))}actions.append(button('Delete','delete',()=>removeArtifact(a)));card.append(top,title,meta,actions);grid.append(card)}}
 async function load(){try{const r=await fetch('/__api/artifacts',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);artifacts=await r.json();render()}catch(e){grid.innerHTML='<div class="empty"><strong>Could not load artifacts</strong>'+e.message+'</div>'}}
-async function removeArtifact(a){if(!confirm('Delete “'+a.title+'”?\n\nThis removes the publication'+(a.mode==='live'?' link, not the original files.':'.')))return;const r=await fetch('/__api/artifacts/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:a.name,csrf})});if(!r.ok){toast('Delete failed');return}artifacts=artifacts.filter(x=>x.name!==a.name);toast('Artifact deleted');render()}
+async function removeArtifact(a){if(!confirm('Delete “'+a.title+'”?\n\n'+(a.mode==='app'?'This unregisters the link; it does not stop or delete the app.':'This removes the publication'+(a.mode==='live'?' link, not the original files.':'.'))))return;const r=await fetch('/__api/artifacts/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:a.name,csrf})});if(!r.ok){toast('Delete failed');return}artifacts=artifacts.filter(x=>x.name!==a.name);toast('Artifact deleted');render()}
 $('#search').addEventListener('input',render);$('#refresh').addEventListener('click',load);$('#filters').addEventListener('click',e=>{if(!e.target.dataset.filter)return;filter=e.target.dataset.filter;document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b===e.target));render()});load();
 </script>
 </body></html>'''
@@ -126,6 +128,11 @@ def describe_artifacts(root: Path) -> list[dict[str, object]]:
             "open_path": open_path,
             "icon": artifact_icon(open_target, is_directory),
         })
+    apps = app_registry.cards(root)
+    if apps:
+        artifacts.extend(apps)
+        # Preserve natural collision ordering within identical publication seconds.
+        artifacts.sort(key=lambda a: (dt.datetime.fromisoformat(a['published_at'] or a['modified']).timestamp(), publication_sort_key(root / a['name'])[1] if a['mode'] != 'app' else ((0, a['name']),)), reverse=True)
     return artifacts
 
 
@@ -175,6 +182,10 @@ class ArtifactHandler(SimpleHTTPRequestHandler):
         return super().send_head()
 
     def do_GET(self) -> None:
+        if urlsplit(self.path).path == '/__api/status':
+            self._send_json(HTTPStatus.OK, {'service': 'agent-artifacts', 'bind': self.server.server_address[0],
+                'port': self.server.server_address[1], 'root_id': hashlib.sha256(str(self.artifact_root.resolve()).encode()).hexdigest()})
+            return
         if urlsplit(self.path).path == API_PREFIX:
             self._send_json(HTTPStatus.OK, describe_artifacts(self.artifact_root))
             return
@@ -199,6 +210,9 @@ class ArtifactHandler(SimpleHTTPRequestHandler):
         name = payload.get("name")
         if not isinstance(name, str) or not name or name != Path(name).name:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid artifact name"})
+            return
+        if app_registry.remove(self.artifact_root, name):
+            self._send_json(HTTPStatus.OK, {'deleted': name})
             return
         artifact = self.artifact_root / name
         if not artifact.is_symlink() and not artifact.exists():
@@ -245,7 +259,7 @@ def make_server(bind: str, port: int, root: Path) -> ThreadingHTTPServer:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bind", default=os.environ.get("AGENT_ARTIFACT_BIND", "0.0.0.0"))
-    parser.add_argument("--port", type=int, default=int(os.environ.get("AGENT_ARTIFACT_PORT", "8787")))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("AGENT_ARTIFACT_PORT", "12345")))
     parser.add_argument("--root", type=Path, default=Path(os.environ.get("AGENT_ARTIFACT_ROOT", DEFAULT_ROOT)))
     args = parser.parse_args()
     with make_server(args.bind, args.port, args.root.expanduser()) as server:

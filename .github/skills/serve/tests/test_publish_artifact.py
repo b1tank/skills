@@ -87,6 +87,16 @@ class PublishArtifactTests(unittest.TestCase):
         self.assertIn("a.published_at||a.modified", server_module.DASHBOARD_HTML)
         self.assertIn('Newest publications first, from the top-left', server_module.DASHBOARD_HTML)
 
+    def test_prune_uses_publication_age_not_copied_mtime(self) -> None:
+        self.public.mkdir()
+        stamp = publisher.dt.datetime.now(publisher.dt.timezone.utc).strftime('%Y%m%d-%H%M%S')
+        fresh = self.public / (stamp + '-fresh')
+        old = self.public / '20000101-000000-old'
+        fresh.mkdir(); old.mkdir()
+        os.utime(fresh, (1000, 1000))
+        self.assertEqual(publisher.prune(self.public, 1), [old.name])
+        self.assertTrue(fresh.exists())
+
     def test_broken_live_link_keeps_publication_date(self) -> None:
         self.public.mkdir()
         path = self.public / '20260802-123045-broken.pdf'
@@ -103,7 +113,7 @@ class PublishArtifactTests(unittest.TestCase):
         second = publisher.publish(source, self.public, "Review Copy")
 
         self.assertTrue((Path(first["published"]) / source.name).is_file())
-        self.assertEqual(first["url"], "http://localhost:8787/20260801-123045-review-copy/Quarterly%20Report.pdf")
+        self.assertEqual(first["url"], "http://localhost:12345/20260801-123045-review-copy/Quarterly%20Report.pdf")
         self.assertTrue(Path(second["published"]).name.endswith("-2"))
 
     def test_publishes_directory_with_relative_assets(self) -> None:

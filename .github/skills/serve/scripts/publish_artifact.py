@@ -18,7 +18,7 @@ from urllib.parse import quote
 
 DEFAULT_ROOT = Path.home() / ".local" / "share" / "agent-artifacts" / "public"
 DEFAULT_HOST = os.environ.get("AGENT_ARTIFACT_HOST", "localhost")
-DEFAULT_PORT = int(os.environ.get("AGENT_ARTIFACT_PORT", "8787"))
+DEFAULT_PORT = int(os.environ.get("AGENT_ARTIFACT_PORT", "12345"))
 
 
 def slugify(value: str) -> str:
@@ -173,7 +173,9 @@ def prune(root: Path, days: int) -> list[str]:
     cutoff = dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
     removed: list[str] = []
     for item in root.iterdir() if root.exists() else []:
-        if item.lstat().st_mtime >= cutoff:
+        published = publication_time(item)
+        age_basis = published.timestamp() if published else item.lstat().st_mtime
+        if age_basis >= cutoff:
             continue
         if item.is_symlink():
             item.unlink()
@@ -208,7 +210,7 @@ def main() -> int:
         else:
             raise ValueError("Provide an artifact path, --list, or --prune-days")
     except (OSError, ValueError) as error:
-        print(f"publish-artifact: {error}", file=sys.stderr)
+        print(f"serve: {error}", file=sys.stderr)
         return 1
 
     if args.json:
