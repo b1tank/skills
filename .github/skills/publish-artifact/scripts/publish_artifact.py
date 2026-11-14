@@ -130,16 +130,38 @@ def publish(source: Path, root: Path, name: str | None = None, live: bool = Fals
     return result
 
 
+def publication_time(path: Path) -> dt.datetime | None:
+    """Managed names preserve publication time even when copytree preserves mtime."""
+    match = re.match(r"^(\d{8}-\d{6})-", path.name)
+    if match:
+        try:
+            return dt.datetime.strptime(match[1], "%Y%m%d-%H%M%S").replace(tzinfo=dt.timezone.utc)
+        except ValueError:
+            pass
+    return None
+
+
+def publication_sort_key(path: Path) -> tuple:
+    published = publication_time(path)
+    timestamp = published.timestamp() if published else path.lstat().st_mtime
+    # Natural-name ties keep collision copies -10 newer than -2 in the same second.
+    natural_name = tuple((1, int(part)) if part.isdigit() else (0, part)
+                         for part in re.split(r"(\d+)", path.name))
+    return timestamp, natural_name
+
+
 def publications(root: Path) -> list[dict[str, Any]]:
     if not root.exists():
         return []
     output = []
-    for item in sorted(root.iterdir(), key=lambda path: path.lstat().st_mtime, reverse=True):
+    for item in sorted(root.iterdir(), key=publication_sort_key, reverse=True):
         if (item.is_dir() and not item.is_symlink()) or item.is_symlink():
+            published = publication_time(item)
             output.append({
                 "name": item.name,
                 "path": str(item),
                 "mode": "live" if item.is_symlink() else "snapshot",
+                "published_at": published.isoformat() if published else None,
                 "modified": dt.datetime.fromtimestamp(item.lstat().st_mtime, dt.timezone.utc).isoformat(),
             })
     return output

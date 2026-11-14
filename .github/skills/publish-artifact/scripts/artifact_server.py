@@ -16,6 +16,8 @@ import secrets
 import shutil
 from urllib.parse import quote, urlsplit
 
+from publish_artifact import publication_sort_key, publication_time
+
 DEFAULT_ROOT = Path.home() / ".local" / "share" / "agent-artifacts" / "public"
 API_PREFIX = "/__api/artifacts"
 MAX_REQUEST_BYTES = 16 * 1024
@@ -33,7 +35,7 @@ DASHBOARD_HTML = r'''<!doctype html>
 </head>
 <body>
 <main class="shell">
-<header><div><div class="eyebrow">LAN / VPN library</div><h1>Agent Artifacts</h1><p class="subtitle">Open, copy, and manage output published by your agent sessions. Live items track their original files; snapshots stay unchanged.</p></div><button class="refresh" id="refresh">↻ Refresh</button></header>
+<header><div><div class="eyebrow">LAN / VPN library</div><h1>Agent Artifacts</h1><p class="subtitle">Newest publications first, from the top-left. Card dates show publication time, not source-file modification time. Live items track originals; snapshots stay unchanged.</p></div><button class="refresh" id="refresh">↻ Refresh</button></header>
 <section class="toolbar"><label class="search"><input id="search" type="search" placeholder="Search artifacts…" autocomplete="off"></label><div class="filters" id="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="snapshot">Snapshots</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="broken">Broken</button></div></section>
 <section class="grid" id="grid"><div class="empty loading"><strong>Loading artifacts…</strong></div></section>
 </main><div class="toast" id="toast" role="status"></div>
@@ -44,7 +46,7 @@ const fmtTime=s=>new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400)}
 function button(label,kind,fn){const b=document.createElement('button');b.className='action '+(kind||'');b.textContent=label;b.addEventListener('click',fn);return b}
 async function copyUrl(url){try{await navigator.clipboard.writeText(url)}catch{const i=document.createElement('input');i.value=url;document.body.append(i);i.select();document.execCommand('copy');i.remove()}toast('URL copied')}
-function render(){const query=$('#search').value.trim().toLowerCase();const shown=artifacts.filter(a=>(filter==='all'||a.mode===filter||(filter==='broken'&&a.broken))&&(!query||a.title.toLowerCase().includes(query)||a.name.toLowerCase().includes(query)));grid.replaceChildren();if(!shown.length){const e=document.createElement('div');e.className='empty';e.innerHTML='<strong>No matching artifacts</strong>Try another filter or publish a new file.';grid.append(e);return}for(const a of shown){const card=document.createElement('article');card.className='card';const top=document.createElement('div');top.className='card-top';const icon=document.createElement('div');icon.className='icon';icon.textContent=a.icon;const badge=document.createElement('span');badge.className='badge '+(a.broken?'broken':a.mode);badge.textContent=a.broken?'broken':a.mode;top.append(icon,badge);const title=document.createElement('h2');title.textContent=a.title;const meta=document.createElement('div');meta.className='meta';meta.textContent=fmtTime(a.modified)+' · '+fmtSize(a.size);const actions=document.createElement('div');actions.className='actions';const url=new URL(a.open_path,location.href).href;if(!a.broken){const open=document.createElement('a');open.className='action primary';open.href=url;open.textContent='Open';actions.append(open);actions.append(button('Copy','',()=>copyUrl(url)))}actions.append(button('Delete','delete',()=>removeArtifact(a)));card.append(top,title,meta,actions);grid.append(card)}}
+function render(){const query=$('#search').value.trim().toLowerCase();const shown=artifacts.filter(a=>(filter==='all'||a.mode===filter||(filter==='broken'&&a.broken))&&(!query||a.title.toLowerCase().includes(query)||a.name.toLowerCase().includes(query)));grid.replaceChildren();if(!shown.length){const e=document.createElement('div');e.className='empty';e.innerHTML='<strong>No matching artifacts</strong>Try another filter or publish a new file.';grid.append(e);return}for(const a of shown){const card=document.createElement('article');card.className='card';const top=document.createElement('div');top.className='card-top';const icon=document.createElement('div');icon.className='icon';icon.textContent=a.icon;const badge=document.createElement('span');badge.className='badge '+(a.broken?'broken':a.mode);badge.textContent=a.broken?'broken':a.mode;top.append(icon,badge);const title=document.createElement('h2');title.textContent=a.title;const meta=document.createElement('div');meta.className='meta';meta.textContent=(a.published_at?'Published ':'Modified ')+fmtTime(a.published_at||a.modified)+' · '+fmtSize(a.size);const actions=document.createElement('div');actions.className='actions';const url=new URL(a.open_path,location.href).href;if(!a.broken){const open=document.createElement('a');open.className='action primary';open.href=url;open.textContent='Open';actions.append(open);actions.append(button('Copy','',()=>copyUrl(url)))}actions.append(button('Delete','delete',()=>removeArtifact(a)));card.append(top,title,meta,actions);grid.append(card)}}
 async function load(){try{const r=await fetch('/__api/artifacts',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);artifacts=await r.json();render()}catch(e){grid.innerHTML='<div class="empty"><strong>Could not load artifacts</strong>'+e.message+'</div>'}}
 async function removeArtifact(a){if(!confirm('Delete “'+a.title+'”?\n\nThis removes the publication'+(a.mode==='live'?' link, not the original files.':'.')))return;const r=await fetch('/__api/artifacts/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:a.name,csrf})});if(!r.ok){toast('Delete failed');return}artifacts=artifacts.filter(x=>x.name!==a.name);toast('Artifact deleted');render()}
 $('#search').addEventListener('input',render);$('#refresh').addEventListener('click',load);$('#filters').addEventListener('click',e=>{if(!e.target.dataset.filter)return;filter=e.target.dataset.filter;document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b===e.target));render()});load();
@@ -91,7 +93,7 @@ def describe_artifacts(root: Path) -> list[dict[str, object]]:
     if not root.exists():
         return []
     artifacts = []
-    for item in sorted(root.iterdir(), key=lambda value: value.lstat().st_mtime, reverse=True):
+    for item in sorted(root.iterdir(), key=publication_sort_key, reverse=True):
         if not item.is_dir() and not item.is_symlink():
             continue
         live = item.is_symlink()
@@ -112,11 +114,13 @@ def describe_artifacts(root: Path) -> list[dict[str, object]]:
                 size = directory_size(item) if item.is_dir() and not live else (item.stat().st_size if item.is_file() else None)
             except OSError:
                 size = None
+        published = publication_time(item)
         artifacts.append({
             "name": item.name,
             "title": display_title(item.name),
             "mode": "live" if live else "snapshot",
             "broken": broken,
+            "published_at": published.isoformat() if published else None,
             "modified": dt.datetime.fromtimestamp(item.lstat().st_mtime, dt.timezone.utc).isoformat(),
             "size": size,
             "open_path": open_path,

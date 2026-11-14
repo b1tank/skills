@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import sys
 import threading
 import time
 import unittest
@@ -24,6 +25,7 @@ def load_module(name: str, relative: str):
     return module
 
 
+sys.path.insert(0, str(SKILL_ROOT / 'scripts'))
 publisher = load_module("publish_artifact", "scripts/publish_artifact.py")
 server_module = load_module("artifact_server", "scripts/artifact_server.py")
 
@@ -40,6 +42,58 @@ class PublishArtifactTests(unittest.TestCase):
     def tearDown(self) -> None:
         publisher.unique_destination = self.original_unique_destination
         self.temporary.cleanup()
+
+    def test_latest_publication_first_despite_copied_mtime(self) -> None:
+        older = self.public / '20260801-123045-older'
+        newer = self.public / '20260802-123045-newer'
+        older.mkdir(parents=True)
+        newer.mkdir()
+        os.utime(older, (2000, 2000))
+        os.utime(newer, (1000, 1000))
+
+        for records in [publisher.publications(self.public), server_module.describe_artifacts(self.public)]:
+            self.assertEqual([r['name'] for r in records], [newer.name, older.name])
+            self.assertEqual(records[0]['published_at'], '2026-08-02T12:30:45+00:00')
+            self.assertEqual(records[0]['modified'], '1970-01-01T00:16:40+00:00')
+
+        # A later edit to an older live target must not make it a new publication.
+        target = self.base / 'target'
+        target.mkdir()
+        live = self.public / '20260701-000000-live'
+        live.symlink_to(target, target_is_directory=True)
+        os.utime(target, (4000000000, 4000000000))
+        self.assertEqual(server_module.describe_artifacts(self.public)[0]['name'], newer.name)
+
+    def test_identical_copied_times_and_natural_collision_order(self) -> None:
+        self.public.mkdir()
+        names = ['20260801-123045-report', '20260801-123045-report-2', '20260801-123045-report-10']
+        for name in names:
+            path = self.public / name
+            path.mkdir()
+            os.utime(path, (1000, 1000))
+        expected = list(reversed(names))
+        self.assertEqual([r['name'] for r in server_module.describe_artifacts(self.public)], expected)
+        self.assertEqual([r['name'] for r in publisher.publications(self.public)], expected)
+
+    def test_legacy_and_invalid_dates_fall_back_without_false_publication_date(self) -> None:
+        self.public.mkdir()
+        for name, timestamp in [('legacy', 2000), ('20269999-999999-invalid', 1000)]:
+            path = self.public / name
+            path.mkdir()
+            os.utime(path, (timestamp, timestamp))
+        records = server_module.describe_artifacts(self.public)
+        self.assertEqual([r['name'] for r in records], ['legacy', '20269999-999999-invalid'])
+        self.assertTrue(all(r['published_at'] is None for r in records))
+        self.assertIn("a.published_at||a.modified", server_module.DASHBOARD_HTML)
+        self.assertIn('Newest publications first, from the top-left', server_module.DASHBOARD_HTML)
+
+    def test_broken_live_link_keeps_publication_date(self) -> None:
+        self.public.mkdir()
+        path = self.public / '20260802-123045-broken.pdf'
+        path.symlink_to(self.base / 'missing.pdf')
+        records = server_module.describe_artifacts(self.public)
+        self.assertTrue(records[0]['broken'])
+        self.assertEqual(records[0]['published_at'], '2026-08-02T12:30:45+00:00')
 
     def test_publishes_file_without_overwriting(self) -> None:
         source = self.base / "Quarterly Report.pdf"
@@ -140,6 +194,7 @@ class PublishArtifactTests(unittest.TestCase):
                 artifacts = json.loads(response.read())
                 self.assertEqual(artifacts[0]["title"], "Report")
                 self.assertEqual(artifacts[0]["open_path"], "20260801-123045-report/report.pdf")
+                self.assertEqual(artifacts[0]['published_at'], '2026-08-01T12:30:45+00:00')
 
             bad = Request(
                 f"{base}/__api/artifacts/delete",

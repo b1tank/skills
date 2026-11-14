@@ -44,7 +44,7 @@ Publish only the artifact the user wants to share. Resolve script paths relative
 
 ## Artifact homepage
 
-Open `http://localhost:8787/` for the responsive artifact library. It provides search, snapshot/live/broken filters, counts, open and copy-URL actions, refresh, and confirmed deletion. Deleting a snapshot removes only its published copy. Deleting a live publication removes only its publication link and preserves the original file or directory.
+Open `http://localhost:8787/` for the responsive artifact library. It provides search, snapshot/live/broken filters, counts, open and copy-URL actions, refresh, and confirmed deletion. Publications are sorted newest-first (top-left) by the UTC timestamp in their generated names, not copied source-folder modification times; cards display publication time. Legacy entries without a valid publication timestamp fall back to filesystem modification time and are labeled Modified. The CLI `--list` uses the same order. Deleting a snapshot removes only its published copy. Deleting a live publication removes only its publication link and preserves the original file or directory.
 
 ## Maintenance
 
